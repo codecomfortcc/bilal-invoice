@@ -13,6 +13,7 @@ import {
   Package,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
+import { GlobalUpdateChecker } from "@/components/GlobalUpdateChecker";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -188,7 +189,7 @@ import { getPreference } from "@/services/system.service";
 function App() {
   const [dbReady, setDbReady] = useState(false);
   const { setCompany } = useCompanyStore();
-  const { setTemplateData, resetInvoiceData } = useInvoiceStore();
+  const { setTemplateData, createNewInvoice } = useInvoiceStore();
   const { loadSystemFonts, loadPreferences } = useUiStore();
 
   useEffect(() => {
@@ -204,7 +205,7 @@ function App() {
           try {
             const template = JSON.parse(templateStr);
             setTemplateData(template);
-            resetInvoiceData(); // Apply template immediately to the blank invoice on load
+            createNewInvoice(); // Apply template immediately to the blank invoice on load
           } catch (e) {
             console.error("Failed to parse default template:", e);
           }
@@ -215,12 +216,13 @@ function App() {
         console.error("Failed to load initial data:", e);
         setDbReady(true);
       });
-  }, [setCompany, setTemplateData, resetInvoiceData]);
+  }, [setCompany, setTemplateData, createNewInvoice]);
 
   if (!dbReady) return <LoadingShell />;
 
   return (
     <BrowserRouter>
+      <GlobalUpdateChecker />
       <SidebarProvider defaultOpen={false}>
         <AppSidebar />
         <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-background">

@@ -34,6 +34,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { parseFontVariant } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { invoke } from "@tauri-apps/api/core";
 
 export function InvoiceEditor() {
   const { invoiceData, updateInvoiceData, pdfQueue, queueSnapshot, clearQueue, createNewInvoice } = useInvoiceStore();
@@ -163,6 +164,24 @@ export function InvoiceEditor() {
     }, 100);
   }, [invoiceData, updateInvoiceData, isEditing]);
 
+  const handleManualUpdateCheck = async () => {
+    toast.info("Checking for updates...");
+    try {
+      const update = await invoke("check_for_updates");
+      if (update) {
+        toast.success(`Update v${(update as any).version} available! Open Settings to install.`);
+      } else {
+        toast.success("Application is up to date.");
+      }
+    } catch (e: any) {
+      if (typeof e === "string" && e.includes("Could not fetch a valid release JSON")) {
+        toast.success("Application is up to date.");
+      } else {
+        toast.error("Failed to check for updates");
+      }
+    }
+  };
+
   // Global Keyboard Shortcuts
   useShortcut({ key: "z", alt: true }, undo, { allowInInputs: false });
   useShortcut({ key: "y", ctrl: true }, redo, { allowInInputs: false });
@@ -170,6 +189,7 @@ export function InvoiceEditor() {
   useShortcut({ key: "+", ctrl: true }, zoomIn, { allowInInputs: true });
   useShortcut({ key: "-", ctrl: true }, zoomOut, { allowInInputs: true });
   useShortcut({ key: "Enter", ctrl: true }, handleGeneratePdf, { allowInInputs: true });
+  useShortcut("ctrl+s", () => handleGeneratePdf(), { allowInInputs: true });
   
   const [showQueueAnim, setShowQueueAnim] = useState(false);
   useShortcut({ key: "q", ctrl: true }, () => {
@@ -247,6 +267,22 @@ export function InvoiceEditor() {
             <DropdownMenuTrigger className="px-2.5 py-1 rounded hover:bg-white/10 outline-none cursor-default focus:bg-white/10 data-[state=open]:bg-white/10">
               Help
             </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 bg-[#252526] text-[#cccccc] border-[#3e3e42] shadow-xl">
+              <DropdownMenuItem className="hover:bg-blue-600 focus:bg-blue-600 cursor-pointer">
+                Documentation
+              </DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-blue-600 focus:bg-blue-600 cursor-pointer">
+                Keyboard Shortcuts
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-[#3e3e42]" />
+              <DropdownMenuItem className="hover:bg-blue-600 focus:bg-blue-600 cursor-pointer" onClick={handleManualUpdateCheck}>
+                Check for Updates...
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-[#3e3e42]" />
+              <DropdownMenuItem className="hover:bg-blue-600 focus:bg-blue-600 cursor-pointer">
+                About Bilal Invoice
+              </DropdownMenuItem>
+            </DropdownMenuContent>
           </DropdownMenu>
 
           <div className="flex-1"></div>
@@ -271,31 +307,31 @@ export function InvoiceEditor() {
             <div className="w-px h-5 bg-[#333333] mx-1"></div>
             
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={
                 <Button variant="ghost" size="icon" className="h-6 w-6 rounded text-[#cccccc] hover:bg-white/10 hover:text-white" onClick={undo}>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.14645 2.14645C7.34171 1.95118 7.65829 1.95118 7.85355 2.14645C8.04882 2.34171 8.04882 2.65829 7.85355 2.85355L4.70711 6H13.5C13.7761 6 14 6.22386 14 6.5C14 8.433 12.433 10 10.5 10H5.5C5.22386 10 5 9.77614 5 9.5C5 9.22386 5.22386 9 5.5 9H10.5C11.8807 9 13 7.88071 13 6.5C13 6.42583 12.9968 6.35246 12.9905 6.28003H4.70711L7.85355 9.42647C8.04882 9.62174 8.04882 9.93832 7.85355 10.1336C7.65829 10.3288 7.34171 10.3288 7.14645 10.1336L3.14645 6.13358C2.95118 5.93832 2.95118 5.62174 3.14645 5.42647L7.14645 1.42647Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
                 </Button>
-              </TooltipTrigger>
+              } />
               <TooltipContent>Undo</TooltipContent>
             </Tooltip>
 
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={
                 <Button variant="ghost" size="icon" className="h-6 w-6 rounded text-[#cccccc] hover:bg-white/10 hover:text-white" onClick={redo}>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.85355 2.14645C7.65829 1.95118 7.34171 1.95118 7.14645 2.14645C6.95118 2.34171 6.95118 2.65829 7.14645 2.85355L10.2929 6H1.5C1.22386 6 1 6.22386 1 6.5C1 8.433 2.567 10 4.5 10H9.5C9.77614 10 10 9.77614 10 9.5C10 9.22386 9.77614 9 9.5 9H4.5C3.11929 9 2 7.88071 2 6.5C2 6.42583 2.0032 6.35246 2.00947 6.28003H10.2929L7.14645 9.42647C6.95118 9.62174 6.95118 9.93832 7.14645 10.1336C7.34171 10.3288 7.65829 10.3288 7.85355 10.1336L11.8536 6.13358C12.0488 5.93832 12.0488 5.62174 11.8536 5.42647L7.85355 1.42647Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
                 </Button>
-              </TooltipTrigger>
+              } />
               <TooltipContent>Redo</TooltipContent>
             </Tooltip>
             
             <div className="w-px h-5 bg-[#333333] mx-1"></div>
             
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={
                 <Button variant="ghost" size="icon" className="h-6 w-6 rounded text-[#cccccc] hover:bg-white/10 hover:text-white" onClick={handleGeneratePdf}>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 1C1.67157 1 1 1.67157 1 2.5V12.5C1 13.3284 1.67157 14 2.5 14H12.5C13.3284 14 14 13.3284 14 12.5V5.20711C14 4.80928 13.842 4.42772 13.5607 4.14645L10.8536 1.43934C10.5723 1.15804 10.1907 1 9.79289 1H2.5ZM2 2.5C2 2.22386 2.22386 2 2.5 2H9.79289C9.9255 2 10.0527 2.05268 10.1464 2.14645L12.8536 4.85355C12.9473 4.94732 13 5.0745 13 5.20711V12.5C13 12.7761 12.7761 13 12.5 13H2.5C2.22386 13 2 12.7761 2 12.5V2.5ZM6 3V6.5C6 6.77614 6.22386 7 6.5 7H11.5C11.7761 7 12 6.77614 12 6.5V3H6ZM6.5 2V6H11V2H6.5ZM4 9.5C4 9.22386 4.22386 9 4.5 9H10.5C10.7761 9 11 9.22386 11 9.5V12H4V9.5ZM5 10V12H10V10H5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
                 </Button>
-              </TooltipTrigger>
+              } />
               <TooltipContent>Save PDF (Ctrl+Enter)</TooltipContent>
             </Tooltip>
           </div>
@@ -304,24 +340,28 @@ export function InvoiceEditor() {
             {/* Zoom Controls inside a dark container */}
             <div className="flex items-center gap-1 bg-[#2d2d2d] border border-[#3e3e42] p-0.5 rounded text-[#cccccc]">
               <Tooltip>
-                <TooltipTrigger
-                  className="flex items-center justify-center h-6 w-6 rounded hover:bg-white/10 transition-all text-[#cccccc]"
-                  onClick={zoomOut}
-                >
-                  <ZoomOut className="h-3.5 w-3.5" />
-                </TooltipTrigger>
+                <TooltipTrigger render={
+                  <div
+                    className="flex items-center justify-center h-6 w-6 rounded hover:bg-white/10 transition-all text-[#cccccc]"
+                    onClick={zoomOut}
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </div>
+                } />
                 <TooltipContent>Zoom Out (Ctrl+-)</TooltipContent>
               </Tooltip>
               <div className="w-10 text-center text-[11px] font-semibold tabular-nums cursor-default select-none">
                 {zoom}%
               </div>
               <Tooltip>
-                <TooltipTrigger
-                  className="flex items-center justify-center h-6 w-6 rounded hover:bg-white/10 transition-all text-[#cccccc]"
-                  onClick={zoomIn}
-                >
-                  <ZoomIn className="h-3.5 w-3.5" />
-                </TooltipTrigger>
+                <TooltipTrigger render={
+                  <div
+                    className="flex items-center justify-center h-6 w-6 rounded hover:bg-white/10 transition-all text-[#cccccc]"
+                    onClick={zoomIn}
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </div>
+                } />
                 <TooltipContent>Zoom In (Ctrl++)</TooltipContent>
               </Tooltip>
             </div>

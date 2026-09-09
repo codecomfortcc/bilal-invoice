@@ -12,6 +12,7 @@ import { GlobalStylesCard } from "./components/GlobalStylesCard";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useUiStore } from "@/stores";
+import { UpdaterCard } from "./components/UpdaterCard";
 
 export function Settings() {
   const { setCompany: setGlobalCompany, company } = useCompanyStore();
@@ -92,6 +93,7 @@ export function Settings() {
         <FormProvider {...methods}>
           <form className="space-y-6 pb-8">
             <div className="space-y-6">
+              <UpdaterCard />
               <GlobalStylesCard />
               <PersonalDetailsCard />
             </div>
