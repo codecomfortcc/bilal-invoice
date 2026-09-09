@@ -1,8 +1,7 @@
 import { jsPDF } from "jspdf";
 import * as htmlToImage from "html-to-image";
 import { InvoiceData } from "@/types";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@tauri-apps/api/core";
 
 export interface PdfResult {
   success: boolean;
@@ -60,42 +59,22 @@ export async function generatePdf(invoiceData: InvoiceData): Promise<PdfResult> 
       pdf.addImage(imgData, "JPEG", 0, 0, renderWidth, Math.min(renderHeight, pdfHeight));
     }
 
-    let savePath = "";
-    let folder = "";
-    let fileName = "";
-
-    if (invoiceData.exportFolder && invoiceData.exportFileName) {
-      // Re-exporting an edited invoice: overwrite without asking
-      folder = invoiceData.exportFolder;
-      fileName = invoiceData.exportFileName;
-      savePath = `${folder}\\${fileName}`;
-    } else {
-      // First time export
-      const defaultFilename = `Invoice-${invoiceData.invoiceNumber || "Draft"}.pdf`;
-      const selectedPath = await save({
-        defaultPath: defaultFilename,
-        filters: [{ name: "PDF Document", extensions: ["pdf"] }],
-      });
-
-      if (!selectedPath) {
-        return { success: false, error: "Export cancelled" };
-      }
-
-      savePath = selectedPath;
-      const lastSlash = Math.max(savePath.lastIndexOf('\\'), savePath.lastIndexOf('/'));
-      folder = savePath.substring(0, lastSlash);
-      fileName = savePath.substring(lastSlash + 1);
-    }
+    const defaultFilename = `Invoice-${invoiceData.invoiceNumber || "Draft"}.pdf`;
+    const folderHint = (invoiceData.exportFolder && invoiceData.exportFileName) ? invoiceData.exportFolder : null;
+    const fileHint = (invoiceData.exportFolder && invoiceData.exportFileName) ? invoiceData.exportFileName : null;
 
     const pdfBuffer = pdf.output("arraybuffer");
-    await writeFile(savePath, new Uint8Array(pdfBuffer));
+    const pdfBytes = Array.from(new Uint8Array(pdfBuffer));
 
-    return { 
-      success: true, 
-      filename: fileName,
-      folder: folder,
-      date: new Date().toISOString()
-    };
+    // Call rust backend to handle the file dialog and writing
+    const result = await invoke<PdfResult>("save_pdf_export", {
+      pdfBytes,
+      defaultFilename,
+      folderHint,
+      fileHint
+    });
+
+    return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("PDF generation failed:", error);

@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   History,
   Settings as SettingsIcon,
+  Package,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -21,98 +22,142 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { initDb } from "@/database/db";
-import { getCompanySettings } from "@/services/company.service";
-import { useCompanyStore } from "@/stores";
+import { getCompanySettings } from "@/services/settings.service";
+import { useCompanyStore, useInvoiceStore, useUiStore } from "@/stores";
 import { InvoiceEditor } from "@/features/invoice-editor/InvoiceEditor";
 import { Settings } from "@/features/settings/Settings";
 import { HistoryPage } from "@/features/history/History";
+import { Inventory } from "@/features/inventory/Inventory";
 import { cn } from "@/lib/utils";
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarInset,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { Titlebar } from "@/components/titlebar";
 
 const NAV_ITEMS = [
   { to: "/", icon: LayoutDashboard, label: "Editor" },
+  { to: "/items", icon: Package, label: "Items" },
   { to: "/history", icon: History, label: "History" },
 ] as const;
 
-function NavItem({
-  to,
-  icon: Icon,
-  label,
-}: {
-  to: string;
-  icon: React.ElementType;
-  label: string;
-}) {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-
+function Logo() {
+  const { toggleSidebar, state } = useSidebar();
+  
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Link
-            to={to}
-            className={cn(
-              "flex items-center justify-center h-9 w-9 rounded-md transition-colors",
-              isActive
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
-            )}
-          >
-            <Icon className="h-[18px] w-[18px]" />
-          </Link>
-        }
-      ></TooltipTrigger>
-      <TooltipContent side="right" sideOffset={8}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    <button 
+      onClick={toggleSidebar}
+      className="flex items-center gap-2 overflow-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors p-1 outline-none ring-sidebar-ring focus-visible:ring-2"
+    >
+      <div className="flex items-center justify-center h-6 w-6 shrink-0 rounded-md">
+        <img src="/icon.png" alt="Logo" className="h-full w-full object-contain drop-shadow-sm" />
+      </div>
+      {state === "expanded" && (
+        <span className="font-semibold text-sm whitespace-nowrap mr-2">Invoice Editor</span>
+      )}
+    </button>
   );
 }
 
-function Sidebar() {
+function AppSidebar() {
   const location = useLocation();
   const isSettingsActive = location.pathname === "/settings";
 
   return (
-    <aside className="flex h-full w-14 flex-col items-center border-r border-sidebar-border bg-sidebar py-4 gap-1">
-      {/* App icon */}
-      <div className="flex items-center justify-center h-9 w-9 rounded-md bg-primary text-primary-foreground text-xs font-bold mb-4">
-        IE
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex flex-col items-center gap-1 flex-1">
-        {NAV_ITEMS.map((item) => (
-          <NavItem key={item.to} {...item} />
-        ))}
-      </nav>
-
-      {/* Bottom actions */}
-      <div className="flex flex-col items-center gap-1 mt-auto">
-        <ThemeToggle />
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Link
-                to="/settings"
-                className={cn(
-                  "flex items-center justify-center h-9 w-9 rounded-md transition-colors",
-                  isSettingsActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
-                )}
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
+      <SidebarHeader className="py-2 px-2">
+        <Logo />
+      </SidebarHeader>
+      
+      <SidebarContent>
+        <SidebarMenu className="px-2 space-y-1">
+          {NAV_ITEMS.map((item) => (
+            <SidebarMenuItem key={item.to}>
+              <SidebarMenuButton 
+                isActive={location.pathname === item.to}
+                tooltip={item.label}
+                render={<Link to={item.to} />}
               >
-                <SettingsIcon className="h-[18px] w-[18px]" />
-              </Link>
-            }
-          ></TooltipTrigger>
-          <TooltipContent side="right" sideOffset={8}>
-            Settings
-          </TooltipContent>
-        </Tooltip>
+                <item.icon className="h-[18px] w-[18px]" />
+                <span>{item.label}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+
+      <SidebarFooter className="py-4">
+        <SidebarMenu className="space-y-1">
+          <SidebarMenuItem>
+            <ThemeToggle />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={isSettingsActive}
+              tooltip="Settings"
+              render={<Link to="/settings" />}
+            >
+              <SettingsIcon className="h-[18px] w-[18px]" />
+              <span>Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
+function MobileTopNav() {
+  const location = useLocation();
+  const { toggleSidebar } = useSidebar();
+  
+  return (
+    <div className="md:hidden flex items-center p-2 border-b border-border bg-background/95 backdrop-blur-xs sticky top-0 z-50 overflow-x-auto no-scrollbar shadow-sm">
+      <button 
+        onClick={toggleSidebar}
+        className="flex items-center justify-center h-8 w-8 shrink-0 rounded-md mr-3"
+      >
+        <img src="/icon.png" alt="Logo" className="h-full w-full object-contain drop-shadow-sm" />
+      </button>
+      
+      <div className="flex items-center gap-1">
+        {NAV_ITEMS.map((item) => (
+          <Link 
+            key={item.to} 
+            to={item.to}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0",
+              location.pathname === item.to 
+                ? "bg-primary/10 text-primary" 
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <item.icon className="h-4 w-4" />
+            <span>{item.label}</span>
+          </Link>
+        ))}
+        <Link
+          to="/settings"
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0 ml-1",
+            location.pathname === "/settings"
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <SettingsIcon className="h-4 w-4" />
+          <span>Settings</span>
+        </Link>
       </div>
-    </aside>
+    </div>
   );
 }
 
@@ -138,34 +183,58 @@ function LoadingShell() {
   );
 }
 
+import { getPreference } from "@/services/system.service";
+
 function App() {
   const [dbReady, setDbReady] = useState(false);
   const { setCompany } = useCompanyStore();
+  const { setTemplateData, resetInvoiceData } = useInvoiceStore();
+  const { loadSystemFonts, loadPreferences } = useUiStore();
 
   useEffect(() => {
-    initDb()
-      .then(async () => {
-        setDbReady(true);
-        const c = await getCompanySettings("default_company");
+    loadSystemFonts();
+    loadPreferences();
+    Promise.all([
+      getCompanySettings("default_company"),
+      getPreference("default_invoice_template").catch(() => null)
+    ])
+      .then(([c, templateStr]) => {
         if (c) setCompany(c);
+        if (templateStr && typeof templateStr === "string") {
+          try {
+            const template = JSON.parse(templateStr);
+            setTemplateData(template);
+            resetInvoiceData(); // Apply template immediately to the blank invoice on load
+          } catch (e) {
+            console.error("Failed to parse default template:", e);
+          }
+        }
+        setDbReady(true);
       })
-      .catch((e) => console.error("Failed to init DB:", e));
-  }, [setCompany]);
+      .catch((e) => {
+        console.error("Failed to load initial data:", e);
+        setDbReady(true);
+      });
+  }, [setCompany, setTemplateData, resetInvoiceData]);
 
   if (!dbReady) return <LoadingShell />;
 
   return (
     <BrowserRouter>
-      <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
-        <Sidebar />
-        <main className="flex-1 overflow-hidden">
-          <Routes>
-            <Route path="/" element={<InvoiceEditor />} />
-            <Route path="/history" element={<HistoryPage />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </main>
-      </div>
+      <SidebarProvider defaultOpen={false}>
+        <AppSidebar />
+        <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-background">
+          <MobileTopNav />
+          <main className="flex-1 overflow-auto">
+            <Routes>
+              <Route path="/" element={<InvoiceEditor />} />
+              <Route path="/items" element={<Inventory />} />
+              <Route path="/history" element={<HistoryPage />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
     </BrowserRouter>
   );
 }
@@ -174,7 +243,12 @@ export default function AppWithProviders() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="invoice-app-theme">
       <TooltipProvider>
-        <App />
+        <div className="flex flex-col h-screen w-screen overflow-hidden">
+          <Titlebar />
+          <div className="flex-1 flex overflow-hidden">
+            <App />
+          </div>
+        </div>
         <Toaster richColors position="bottom-right" />
       </TooltipProvider>
     </ThemeProvider>

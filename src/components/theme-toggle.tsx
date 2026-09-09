@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { SidebarMenuButton } from "@/components/ui/sidebar";
 
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme();
@@ -15,15 +15,11 @@ export function ThemeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
+          <SidebarMenuButton tooltip="Theme">
+            <Sun className="h-[18px] w-[18px] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span>Theme</span>
+          </SidebarMenuButton>
         }
       ></DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="right" sideOffset={8}>

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "invoice-generator",
-  "version": "0.1.0",
-  "identifier": "com.bilal.invoice-generator",
+  "productName": "Bilal Invoice",
+  "version": "3.0.0",
+  "identifier": "com.bilal.invoice",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,9 +12,10 @@
   "app": {
     "windows": [
       {
-        "title": "invoice-generator",
+        "title": "Bilal Invoice",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "decorations": false
       }
     ],
     "security": {
@@ -30,6 +31,7 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "publisher": "Bilal"
   }
 }
