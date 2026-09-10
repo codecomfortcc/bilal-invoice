@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getVersion } from "@tauri-apps/api/app";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { RefreshCw, Download } from "lucide-react";
+import { RefreshCw, Download, Loader2 } from "lucide-react";
 import { useUiStore } from "@/stores";
 import { useDebugLogStore } from "@/stores/debug.store";
+import { parseReleaseNotes } from "@/lib/releaseNotesParser";
+import { ReleaseNotesView } from "@/components/ReleaseNotesView";
 
 interface UpdateInfo {
   version: string;
@@ -22,6 +24,7 @@ interface ProgressPayload {
 export function UpdaterCard() {
   const [isChecking, setIsChecking] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [progress, setProgress] = useState(0);
   const [currentVersion, setCurrentVersion] = useState<string>("");
@@ -31,16 +34,21 @@ export function UpdaterCard() {
   useEffect(() => {
     getVersion().then(setCurrentVersion).catch(console.error);
 
+    let downloadedBytes = 0;
     const unlistenProgress = listen<ProgressPayload>("updater-progress", (event) => {
       const { downloaded, total } = event.payload;
+      downloadedBytes += downloaded;
       if (total) {
-        setProgress((downloaded / total) * 100);
+        setProgress((downloadedBytes / total) * 100);
+        if (downloadedBytes >= total) {
+          setIsInstalling(true);
+        }
       }
     });
 
     const unlistenStatus = listen<string>("updater-status", (event) => {
       if (event.payload === "downloaded") {
-        setIsDownloading(false);
+        setIsInstalling(true);
         setProgress(100);
       }
     });
@@ -87,6 +95,7 @@ export function UpdaterCard() {
 
   const installUpdate = async () => {
     setIsDownloading(true);
+    setIsInstalling(false);
     setProgress(0);
     addLog("info", "Starting update download & install...");
     try {
@@ -102,8 +111,14 @@ export function UpdaterCard() {
       }
       addLog("error", "Failed to install update", errMsg);
       setIsDownloading(false);
+      setIsInstalling(false);
     }
   };
+
+  const parsedNotes = useMemo(() => {
+    if (!updateInfo?.body) return null;
+    return parseReleaseNotes(updateInfo.body);
+  }, [updateInfo]);
 
   return (
     <Card>
@@ -124,21 +139,30 @@ export function UpdaterCard() {
         {updateInfo ? (
           <div className="space-y-4">
             <div className="p-4 bg-muted/50 rounded-lg">
-              <h4 className="font-medium text-sm mb-1">New Version Available: v{updateInfo.version}</h4>
-              {updateInfo.body && (
+              <h4 className="font-medium text-sm mb-4">New Version Available: v{updateInfo.version}</h4>
+              {parsedNotes ? (
+                <ReleaseNotesView notes={parsedNotes} />
+              ) : updateInfo.body ? (
                 <p className="text-xs text-muted-foreground whitespace-pre-wrap">{updateInfo.body}</p>
-              )}
+              ) : null}
             </div>
 
             {isDownloading ? (
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Downloading update...</span>
+                  {isInstalling ? (
+                    <span className="flex items-center text-primary font-medium">
+                      <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                      Installing... Please wait (app will restart)
+                    </span>
+                  ) : (
+                    <span>Downloading update...</span>
+                  )}
                   <span>{Math.round(progress)}%</span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    className={`h-full rounded-full transition-all duration-300 ${isInstalling ? 'bg-primary/60 animate-pulse' : 'bg-primary'}`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>

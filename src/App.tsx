@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { GlobalUpdateChecker } from "@/components/GlobalUpdateChecker";
+import { WhatsNewModal } from "@/components/WhatsNewModal";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -230,6 +231,7 @@ function App() {
   return (
     <BrowserRouter>
       <GlobalUpdateChecker />
+      <WhatsNewModal />
       <SidebarProvider defaultOpen={false}>
         <AppSidebar />
         <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-background">

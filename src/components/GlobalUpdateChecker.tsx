@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import {
@@ -12,9 +12,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { useUiStore } from "@/stores";
 import { useDebugLogStore } from "@/stores/debug.store";
+import { parseReleaseNotes } from "@/lib/releaseNotesParser";
+import { ReleaseNotesView } from "@/components/ReleaseNotesView";
 
 interface UpdateInfo {
   version: string;
@@ -29,6 +31,7 @@ interface ProgressPayload {
 export function GlobalUpdateChecker() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
   const [progress, setProgress] = useState(0);
   
   const developerMode = useUiStore((s) => s.developerMode);
@@ -59,16 +62,21 @@ export function GlobalUpdateChecker() {
 
     checkSilent();
 
+    let downloadedBytes = 0;
     const unlistenProgress = listen<ProgressPayload>("updater-progress", (event) => {
       const { downloaded, total } = event.payload;
+      downloadedBytes += downloaded;
       if (total) {
-        setProgress((downloaded / total) * 100);
+        setProgress((downloadedBytes / total) * 100);
+        if (downloadedBytes >= total) {
+          setIsInstalling(true);
+        }
       }
     });
 
     const unlistenStatus = listen<string>("updater-status", (event) => {
       if (event.payload === "downloaded") {
-        setIsDownloading(false);
+        setIsInstalling(true);
         setProgress(100);
       }
     });
@@ -81,6 +89,7 @@ export function GlobalUpdateChecker() {
 
   const handleInstall = async () => {
     setIsDownloading(true);
+    setIsInstalling(false);
     setProgress(0);
     addLog("info", "[Global] Starting update download & install...");
     try {
@@ -96,13 +105,19 @@ export function GlobalUpdateChecker() {
       }
       addLog("error", "[Global] Failed to install update", errMsg);
       setIsDownloading(false);
+      setIsInstalling(false);
       setUpdateInfo(null);
     }
   };
 
+  const parsedNotes = useMemo(() => {
+    if (!updateInfo?.body) return null;
+    return parseReleaseNotes(updateInfo.body);
+  }, [updateInfo]);
+
   return (
     <AlertDialog open={!!updateInfo}>
-      <AlertDialogContent>
+      <AlertDialogContent className="sm:max-w-[500px]">
         <AlertDialogHeader>
           <AlertDialogTitle>Update Available</AlertDialogTitle>
           <AlertDialogDescription>
@@ -110,15 +125,28 @@ export function GlobalUpdateChecker() {
           </AlertDialogDescription>
         </AlertDialogHeader>
 
+        {parsedNotes && (
+          <div className="py-2 max-h-[40vh] overflow-y-auto pr-2 bg-muted/30 rounded-md p-4">
+             <ReleaseNotesView notes={parsedNotes} />
+          </div>
+        )}
+
         {isDownloading && (
           <div className="space-y-2 py-4">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Downloading update...</span>
+              {isInstalling ? (
+                <span className="flex items-center text-primary font-medium">
+                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                  Installing... Please wait
+                </span>
+              ) : (
+                <span>Downloading update...</span>
+              )}
               <span>{Math.round(progress)}%</span>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
               <div
-                className="bg-primary h-2 rounded-full transition-all duration-300"
+                className={`h-full rounded-full transition-all duration-300 ${isInstalling ? 'bg-primary/60 animate-pulse' : 'bg-primary'}`}
                 style={{ width: `${progress}%` }}
               />
             </div>
