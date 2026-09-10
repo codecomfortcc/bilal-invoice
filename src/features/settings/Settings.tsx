@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { FormProvider } from "react-hook-form";
 import { saveCompanySettings } from "@/services/settings.service";
 import { useCompanyStore } from "@/stores";
@@ -11,18 +11,18 @@ import { PersonalDetailsCard } from "./components/PersonalDetailsCard";
 import { GlobalStylesCard } from "./components/GlobalStylesCard";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useUiStore } from "@/stores";
 import { UpdaterCard } from "./components/UpdaterCard";
 
 export function Settings() {
-  const { setCompany: setGlobalCompany, company } = useCompanyStore();
+  const { setCompany: setGlobalCompany } = useCompanyStore();
   const { developerMode, setDeveloperMode } = useUiStore();
   const [isSaving, setIsSaving] = useState(false);
   const methods = useSettingsForm();
+  const skipNextResetRef = (methods as any).__skipNextReset as React.MutableRefObject<boolean>;
 
-  const onSubmit = async (data: SettingsFormValues) => {
-    if (!methods.formState.isDirty) return;
-    
+  const doSave = useCallback(async (data: SettingsFormValues) => {
     setIsSaving(true);
     try {
       // Use the latest company state from the store to avoid stale closures
@@ -42,9 +42,13 @@ export function Settings() {
         autoSaveProducts: data.autoSaveProducts ?? true,
         billSize: data.billSize || "A4",
         numberFormat: data.numberFormat || "indian",
+        dateFormat: data.dateFormat || "YYYY-MM-DD",
       };
 
       await saveCompanySettings(updatedCompany as any);
+      
+      // Tell useSettingsForm to NOT reset the form when it sees the company update we're about to trigger
+      skipNextResetRef.current = true;
       setGlobalCompany(updatedCompany as any);
       
       // Reset isDirty state to prevent continuous saving loops
@@ -55,17 +59,19 @@ export function Settings() {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [methods, setGlobalCompany, skipNextResetRef]);
 
+  // Auto-save on form changes with debounce
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    const subscription = methods.watch(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const subscription = methods.watch((_value, { type }) => {
+      // Only auto-save on actual user changes, not programmatic resets
+      if (type !== "change") return;
+      
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        // We use handleSubmit to validate, but onSubmit handles the dirty check
         methods.handleSubmit((data) => {
-           // Call the latest onSubmit function
-           onSubmit(data);
+          doSave(data);
         })();
       }, 500);
     });
@@ -73,7 +79,7 @@ export function Settings() {
       clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, [methods.watch, methods.handleSubmit, methods.formState.isDirty]);
+  }, [methods, doSave]);
 
   return (
     <div className="h-full overflow-auto">
@@ -100,26 +106,30 @@ export function Settings() {
           </form>
         </FormProvider>
 
-        <Separator />
-        
-        <div className="py-2">
-          <h3 className="text-lg font-medium mb-4">Advanced Tools</h3>
-          <div className="flex items-center space-x-2">
-            <Switch 
-              id="developer-mode" 
-              checked={developerMode}
-              onCheckedChange={setDeveloperMode}
-            />
-            <Label htmlFor="developer-mode" className="flex flex-col">
-              <span>Developer Mode</span>
-              <span className="font-normal text-sm text-muted-foreground">
-                Hold Alt and hover over text fields to reveal their internal identifiers.
-              </span>
-            </Label>
-          </div>
-        </div>
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Advanced Tools</CardTitle>
+            <CardDescription>Extra configurations and tools for advanced users.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+              <div className="space-y-0.5">
+                <Label htmlFor="developer-mode" className="text-[13px] font-medium text-foreground cursor-pointer">
+                  Developer Mode
+                </Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Hold Alt and hover over text fields to reveal their internal identifiers.
+                </p>
+              </div>
+              <Switch 
+                id="developer-mode" 
+                checked={developerMode}
+                onCheckedChange={setDeveloperMode}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
-

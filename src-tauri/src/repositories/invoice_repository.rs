@@ -14,7 +14,10 @@ pub fn save_invoice(conn: &Connection, invoice: &Invoice) -> Result<()> {
             deliveryNote, modeOfPayment, referenceNo, otherReferences,
             buyersOrderNo, buyersOrderDate, dispatchDocNo, deliveryNoteDate,
             dispatchedThrough, destination, termsOfDelivery,
-            status, exportFileName, exportFolder, exportDate, created_at, updated_at
+            status, exportFileName, exportFolder, exportDate, created_at, updated_at,
+            seller_name, seller_address_line_1, seller_address_line_2, seller_city, seller_pincode, seller_state, seller_state_code, seller_gst, seller_email, seller_phone, seller_logo,
+            bank_name, bank_account_number, bank_ifsc_code, bank_account_name,
+            signature_image, digital_signature_name
         ) VALUES (
             ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8,
             ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17,
@@ -22,7 +25,10 @@ pub fn save_invoice(conn: &Connection, invoice: &Invoice) -> Result<()> {
             ?27, ?28, ?29, ?30,
             ?31, ?32, ?33, ?34,
             ?35, ?36, ?37,
-            ?38, ?39, ?40, ?41, ?42, ?43
+            ?38, ?39, ?40, ?41, ?42, ?43,
+            ?44, ?45, ?46, ?47, ?48, ?49, ?50, ?51, ?52, ?53, ?54,
+            ?55, ?56, ?57, ?58,
+            ?59, ?60
         )
         ON CONFLICT(id) DO UPDATE SET
             invoiceNumber=excluded.invoiceNumber, date=excluded.date, customerId=excluded.customerId,
@@ -34,7 +40,10 @@ pub fn save_invoice(conn: &Connection, invoice: &Invoice) -> Result<()> {
             dispatchDocNo=excluded.dispatchDocNo, deliveryNoteDate=excluded.deliveryNoteDate,
             dispatchedThrough=excluded.dispatchedThrough, destination=excluded.destination, termsOfDelivery=excluded.termsOfDelivery,
             status=excluded.status, exportFileName=excluded.exportFileName, exportFolder=excluded.exportFolder,
-            exportDate=excluded.exportDate, updated_at=excluded.updated_at",
+            exportDate=excluded.exportDate, updated_at=excluded.updated_at,
+            seller_name=excluded.seller_name, seller_address_line_1=excluded.seller_address_line_1, seller_address_line_2=excluded.seller_address_line_2, seller_city=excluded.seller_city, seller_pincode=excluded.seller_pincode, seller_state=excluded.seller_state, seller_state_code=excluded.seller_state_code, seller_gst=excluded.seller_gst, seller_email=excluded.seller_email, seller_phone=excluded.seller_phone, seller_logo=excluded.seller_logo,
+            bank_name=excluded.bank_name, bank_account_number=excluded.bank_account_number, bank_ifsc_code=excluded.bank_ifsc_code, bank_account_name=excluded.bank_account_name,
+            signature_image=excluded.signature_image, digital_signature_name=excluded.digital_signature_name",
         params![
             invoice.id, invoice.invoice_number, invoice.date, invoice.customer_id, items_json, invoice.remarks, invoice.total, invoice.amount_in_words,
             invoice.consignee_name, invoice.consignee_address_line_1, invoice.consignee_address_line_2, invoice.consignee_city, invoice.consignee_pincode, invoice.consignee_address, invoice.consignee_gst, invoice.consignee_state, invoice.consignee_state_code,
@@ -42,7 +51,10 @@ pub fn save_invoice(conn: &Connection, invoice: &Invoice) -> Result<()> {
             invoice.delivery_note, invoice.mode_of_payment, invoice.reference_no, invoice.other_references,
             invoice.buyers_order_no, invoice.buyers_order_date, invoice.dispatch_doc_no, invoice.delivery_note_date,
             invoice.dispatched_through, invoice.destination, invoice.terms_of_delivery,
-            invoice.status.clone().unwrap_or_else(|| "draft".to_string()), invoice.export_file_name, invoice.export_folder, invoice.export_date, now, now
+            invoice.status.clone().unwrap_or_else(|| "draft".to_string()), invoice.export_file_name, invoice.export_folder, invoice.export_date, now, now,
+            invoice.seller_name, invoice.seller_address_line_1, invoice.seller_address_line_2, invoice.seller_city, invoice.seller_pincode, invoice.seller_state, invoice.seller_state_code, invoice.seller_gst, invoice.seller_email, invoice.seller_phone, invoice.seller_logo,
+            invoice.bank_name, invoice.bank_account_number, invoice.bank_ifsc_code, invoice.bank_account_name,
+            invoice.signature_image, invoice.digital_signature_name
         ],
     )?;
 
@@ -95,6 +107,26 @@ fn row_to_invoice(row: &rusqlite::Row) -> rusqlite::Result<Invoice> {
         destination: row.get("destination").unwrap_or(None),
         terms_of_delivery: row.get("termsOfDelivery").unwrap_or(None),
         status: row.get("status").unwrap_or(None),
+        
+        seller_name: row.get("seller_name").unwrap_or(None),
+        seller_address_line_1: row.get("seller_address_line_1").unwrap_or(None),
+        seller_address_line_2: row.get("seller_address_line_2").unwrap_or(None),
+        seller_city: row.get("seller_city").unwrap_or(None),
+        seller_pincode: row.get("seller_pincode").unwrap_or(None),
+        seller_state: row.get("seller_state").unwrap_or(None),
+        seller_state_code: row.get("seller_state_code").unwrap_or(None),
+        seller_gst: row.get("seller_gst").unwrap_or(None),
+        seller_email: row.get("seller_email").unwrap_or(None),
+        seller_phone: row.get("seller_phone").unwrap_or(None),
+        seller_logo: row.get("seller_logo").unwrap_or(None),
+
+        bank_name: row.get("bank_name").unwrap_or(None),
+        bank_account_number: row.get("bank_account_number").unwrap_or(None),
+        bank_ifsc_code: row.get("bank_ifsc_code").unwrap_or(None),
+        bank_account_name: row.get("bank_account_name").unwrap_or(None),
+
+        signature_image: row.get("signature_image").unwrap_or(None),
+        digital_signature_name: row.get("digital_signature_name").unwrap_or(None),
     })
 }
 

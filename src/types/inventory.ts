@@ -1,7 +1,7 @@
 export interface InventoryItem {
   id: string;
   title: string;
-  hsn_sac?: string;
+  hsnSac?: string;
   rate?: number;
   unit?: string;
 }

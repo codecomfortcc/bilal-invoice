@@ -7,12 +7,17 @@ interface InvoiceState {
   invoiceData: InvoiceData;
   templateData: InvoiceData | null;
   setInvoiceData: (data: InvoiceData) => void;
-  updateInvoiceData: (updates: Partial<InvoiceData>) => void;
-  createNewInvoice: () => void;
+  updateInvoiceData: (updates: Partial<InvoiceData>) => Promise<void>;
+  createNewInvoice: () => Promise<void>;
   setTemplateData: (data: InvoiceData | null) => void;
-  pdfQueue: { invoice: InvoiceData, company: Company | null }[];
+  importState: (data: InvoiceData) => void;
+  pdfQueue: { queueId: string, invoice: InvoiceData, company: Company | null }[];
   queueSnapshot: () => void;
+  removeFromQueue: (index: number) => void;
+  reorderQueue: (newQueue: { queueId: string, invoice: InvoiceData, company: Company | null }[]) => void;
   clearQueue: () => void;
+  updateQueueItemInvoice: (queueId: string, updates: Partial<InvoiceData>) => void;
+  updateQueueItemCompany: (queueId: string, updates: Partial<Company>) => void;
 }
 
 const defaultInvoice: InvoiceData = {
@@ -35,15 +40,27 @@ export const useInvoiceStore = create<InvoiceState>((set, get) => ({
     invoiceData: data, 
   }),
   
-  updateInvoiceData: (updates) =>
-    set((state) => {
-      const newInvoiceData = { ...state.invoiceData, ...updates };
-      return {
-        invoiceData: newInvoiceData,
-      };
-    }),
+  updateInvoiceData: async (updates) => {
+    const currentState = get().invoiceData;
+    const optimisticData = { ...currentState, ...updates };
+    
+    // 1. Optimistic UI update
+    set({ invoiceData: optimisticData });
+
+    // 2. Commit to Backend as Source of Truth
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const savedInvoice = await invoke('save_invoice', { invoice: optimisticData });
+      // 3. Update UI with Canonical Backend State (e.g. recalculated totals)
+      set({ invoiceData: savedInvoice as InvoiceData });
+    } catch (e) {
+      console.error("Failed to save to backend:", e);
+    }
+  },
     
   setTemplateData: (data) => set({ templateData: data }),
+  
+  importState: (data) => set({ invoiceData: data, templateData: data }),
   
   queueSnapshot: () => {
     const { invoiceData } = get();
@@ -52,6 +69,7 @@ export const useInvoiceStore = create<InvoiceState>((set, get) => ({
       pdfQueue: [
         ...state.pdfQueue,
         {
+          queueId: crypto.randomUUID ? crypto.randomUUID() : `q_${Date.now()}_${Math.random()}`,
           invoice: structuredClone(invoiceData),
           company: structuredClone(company)
         }
@@ -59,34 +77,42 @@ export const useInvoiceStore = create<InvoiceState>((set, get) => ({
     }));
   },
   
+  removeFromQueue: (index: number) => set((state) => ({
+    pdfQueue: state.pdfQueue.filter((_, i) => i !== index)
+  })),
+
+  reorderQueue: (newQueue) => set({ pdfQueue: newQueue }),
+  
   clearQueue: () => set({ pdfQueue: [] }),
   
-  createNewInvoice: () => {
-    const { invoiceData, templateData } = get();
-    const company = useCompanyStore.getState().company;
-    let lockedFields: Record<string, any> = {};
-    if (company?.lockedFields) {
-      try {
-        lockedFields = JSON.parse(company.lockedFields);
-      } catch (e) {}
+  updateQueueItemInvoice: (queueId, updates) => set((state) => ({
+    pdfQueue: state.pdfQueue.map(item => 
+      item.queueId === queueId 
+        ? { ...item, invoice: { ...item.invoice, ...updates } } 
+        : item
+    )
+  })),
+
+  updateQueueItemCompany: (queueId, updates) => set((state) => ({
+    pdfQueue: state.pdfQueue.map(item => 
+      item.queueId === queueId && item.company
+        ? { ...item, company: { ...item.company, ...updates } } 
+        : item
+    )
+  })),
+  
+  createNewInvoice: async () => {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const currentTemplate = get().templateData;
+      // The Rust backend handles all initialization and lock persistence rules
+      const newInvoice = await invoke('initialize_invoice', { template: currentTemplate });
+      set({ 
+        invoiceData: newInvoice as InvoiceData, 
+        templateData: currentTemplate // keep the template in memory for future uses
+      });
+    } catch (e) {
+      console.error("Failed to initialize new invoice:", e);
     }
-
-    const base = templateData ? structuredClone(templateData) : structuredClone(defaultInvoice);
-    
-    // For every property in the current invoiceData, if it's locked, retain its value.
-    // If not locked, we use the base/default value.
-    const newInvoiceData: any = {
-      ...base,
-      id: `inv_${Date.now()}`,
-      date: format(new Date(), "yyyy-MM-dd"),
-    };
-
-    for (const key of Object.keys(invoiceData)) {
-      if (lockedFields[key] && (invoiceData as any)[key] !== undefined) {
-        newInvoiceData[key] = (invoiceData as any)[key];
-      }
-    }
-
-    set({ invoiceData: newInvoiceData });
   },
 }));

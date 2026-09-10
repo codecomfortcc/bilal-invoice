@@ -189,7 +189,7 @@ import { getPreference } from "@/services/system.service";
 function App() {
   const [dbReady, setDbReady] = useState(false);
   const { setCompany } = useCompanyStore();
-  const { setTemplateData, createNewInvoice } = useInvoiceStore();
+  const { setInvoiceData, setTemplateData, createNewInvoice } = useInvoiceStore();
   const { loadSystemFonts, loadPreferences } = useUiStore();
 
   useEffect(() => {
@@ -199,24 +199,31 @@ function App() {
       getCompanySettings("default_company"),
       getPreference("default_invoice_template").catch(() => null)
     ])
-      .then(([c, templateStr]) => {
+      .then(async ([c, templateStr]) => {
         if (c) setCompany(c);
         if (templateStr && typeof templateStr === "string") {
           try {
             const template = JSON.parse(templateStr);
             setTemplateData(template);
-            createNewInvoice(); // Apply template immediately to the blank invoice on load
           } catch (e) {
             console.error("Failed to parse default template:", e);
           }
         }
+        
+        // Always start with a fresh invoice inheriting locked fields
+        try {
+          await createNewInvoice();
+        } catch (e) {
+          console.error("Failed to create new invoice:", e);
+        }
+        
         setDbReady(true);
       })
       .catch((e) => {
         console.error("Failed to load initial data:", e);
         setDbReady(true);
       });
-  }, [setCompany, setTemplateData, createNewInvoice]);
+  }, [setCompany, setTemplateData, setInvoiceData, createNewInvoice]);
 
   if (!dbReady) return <LoadingShell />;
 

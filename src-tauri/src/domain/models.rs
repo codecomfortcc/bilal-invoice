@@ -54,6 +54,14 @@ pub struct Company {
     pub master_font_variant: Option<String>,
     pub custom_labels: Option<String>,
     pub master_color: Option<String>,
+    pub locked_fields: Option<String>,
+    pub column_widths: Option<String>,
+    pub show_bank_details: Option<bool>,
+    pub show_digital_signature: Option<bool>,
+    pub show_signature_image: Option<bool>,
+    pub auto_save_products: Option<bool>,
+    pub bill_size: Option<String>,
+    pub date_format: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -133,6 +141,29 @@ pub struct Invoice {
     pub destination: Option<String>,
     pub terms_of_delivery: Option<String>,
     pub status: Option<String>,
+    
+    // My Details (Seller)
+    pub seller_name: Option<String>,
+    pub seller_address_line_1: Option<String>,
+    pub seller_address_line_2: Option<String>,
+    pub seller_city: Option<String>,
+    pub seller_pincode: Option<String>,
+    pub seller_state: Option<String>,
+    pub seller_state_code: Option<String>,
+    pub seller_gst: Option<String>,
+    pub seller_email: Option<String>,
+    pub seller_phone: Option<String>,
+    pub seller_logo: Option<String>,
+
+    // Payee Details (Bank)
+    pub bank_name: Option<String>,
+    pub bank_account_number: Option<String>,
+    pub bank_ifsc_code: Option<String>,
+    pub bank_account_name: Option<String>,
+
+    // Signature
+    pub signature_image: Option<String>,
+    pub digital_signature_name: Option<String>,
 }
 
 impl InvoiceItem {

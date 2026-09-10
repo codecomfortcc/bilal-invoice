@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Lock, Unlock, RotateCcw, Type, Baseline, CaseUpper, Check, ChevronsUpDown, Trash2 } from "lucide-react";
+import { Lock, Unlock, CalendarIcon, RotateCcw, Type, Baseline, CaseUpper, Check, ChevronsUpDown, Trash2 } from "lucide-react";
 import { useCompanyStore, useHistoryStore, useUiStore } from "@/stores";
 import { saveCompanySettings } from "@/services/settings.service";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -10,7 +10,9 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
+import { Calendar } from "@/components/ui/calendar";
 import { formatFontVariant, parseFontVariant } from "@/lib/utils";
+import { format, parse, isValid } from "date-fns";
 import { CompanyContext } from "./InvoicePreview";
 
 const FALLBACK_FONTS = [
@@ -19,43 +21,39 @@ const FALLBACK_FONTS = [
 
 const SIZES = ["10px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px"];
 
-export const EditableText = ({
+export const EditableDate = ({
   value,
   onChange,
-  isEditing,
   className,
-  placeholder = "",
-  options,
+  placeholder = "Select Date",
   lockableKey,
   styleKey,
-  numericOnly = false,
-  type,
-  multiline,
-  onDone,
+  isEditing = true,
 }: {
-  value: string | number;
+  value: string;
   onChange: (val: string) => void;
-  isEditing: boolean;
   className?: string;
   placeholder?: string;
-  options?: string[];
   lockableKey?: string;
   styleKey?: string;
-  numericOnly?: boolean;
-  type?: string;
-  multiline?: boolean;
-  onDone?: (val: string) => void;
+  isEditing?: boolean;
 }) => {
   const [openPopover, setOpenPopover] = useState(false);
   const [openFontDropdown, setOpenFontDropdown] = useState(false);
-  const [localValue, setLocalValue] = useState(String(value || ""));
   const [isAltHover, setIsAltHover] = useState(false);
   const [computedSize, setComputedSize] = useState("");
   const [computedVariant, setComputedVariant] = useState("");
-  const spanRef = React.useRef<HTMLSpanElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  const { company: globalCompany, setCompany } = useCompanyStore();
+  // Date state
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [day, setDay] = useState("");
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState("");
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
+
+  const spanRef = React.useRef<HTMLSpanElement>(null);
+  
+  const { company: globalCompany } = useCompanyStore();
   const contextCompany = React.useContext(CompanyContext);
   const company = contextCompany || globalCompany;
   const developerMode = useUiStore((state) => state.developerMode);
@@ -85,10 +83,19 @@ export const EditableText = ({
   const currentFontFamily = myStyle?.font || company?.masterFont || "Segoe UI";
   const selectedFontObj = systemFonts.find(f => f.family === currentFontFamily);
   const availableVariants = selectedFontObj?.variants || ["Regular", "Italic", "Bold", "Bold Italic"];
-
-  // Sync value
+  
+  // Initialize state from prop value
   useEffect(() => {
-    setLocalValue(String(value || ""));
+    if (value) {
+      const parsedDate = new Date(value);
+      if (isValid(parsedDate)) {
+        setDate(parsedDate);
+        setDay(format(parsedDate, "dd"));
+        setMonth(format(parsedDate, "MM"));
+        setYear(format(parsedDate, "yyyy"));
+        setCalendarMonth(parsedDate);
+      }
+    }
   }, [value]);
 
   const toggleLock = () => {
@@ -100,13 +107,13 @@ export const EditableText = ({
         id: lockableKey,
         isLocked: true,
         label: placeholder || lockableKey,
-        value: String(localValue || value || "")
+        value: value,
       };
     } else {
       delete currentLocked[lockableKey];
     }
-    const updatedCompany = { ...company, lockedFields: JSON.stringify(currentLocked) } as import("@/types").Company;
-    setCompany(updatedCompany);
+    const updatedCompany = { ...company, lockedFields: JSON.stringify(currentLocked) } as any;
+    useCompanyStore.getState().setCompany(updatedCompany);
     saveCompanySettings(updatedCompany);
   };
 
@@ -117,20 +124,8 @@ export const EditableText = ({
     if (!currentStyles[uniqueKey]) currentStyles[uniqueKey] = {};
     currentStyles[uniqueKey][key] = val;
     
-    const updatedCompany = { ...company, fieldStyles: JSON.stringify(currentStyles) } as import("@/types").Company;
-    setCompany(updatedCompany);
-    saveCompanySettings(updatedCompany);
-  };
-
-  const updateStyles = (updates: Record<string, any>) => {
-    if (!company || !uniqueKey) return;
-    useHistoryStore.getState().commit();
-    let currentStyles = { ...fieldStyles };
-    if (!currentStyles[uniqueKey]) currentStyles[uniqueKey] = {};
-    Object.assign(currentStyles[uniqueKey], updates);
-    
-    const updatedCompany = { ...company, fieldStyles: JSON.stringify(currentStyles) } as import("@/types").Company;
-    setCompany(updatedCompany);
+    const updatedCompany = { ...company, fieldStyles: JSON.stringify(currentStyles) } as any;
+    useCompanyStore.getState().setCompany(updatedCompany);
     saveCompanySettings(updatedCompany);
   };
 
@@ -139,37 +134,60 @@ export const EditableText = ({
     useHistoryStore.getState().commit();
     let currentStyles = { ...fieldStyles };
     delete currentStyles[uniqueKey];
-    const updatedCompany = { ...company, fieldStyles: JSON.stringify(currentStyles) } as import("@/types").Company;
-    setCompany(updatedCompany);
+    const updatedCompany = { ...company, fieldStyles: JSON.stringify(currentStyles) } as any;
+    useCompanyStore.getState().setCompany(updatedCompany);
     saveCompanySettings(updatedCompany);
   };
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    let newVal = e.target.value;
-    if (numericOnly) {
-      // Allow only numbers, dot, and comma
-      newVal = newVal.replace(/[^0-9.,]/g, '');
+  // Format the output date based on company settings
+  const getFormattedDisplay = () => {
+    if (!date || !isValid(date)) return value || placeholder;
+    const formatStr = company?.dateFormat || "YYYY-MM-DD";
+    switch (formatStr) {
+      case "DD-MM-YYYY": return format(date, "dd-MM-yyyy");
+      case "DD-MM-YY": return format(date, "dd-MM-yy");
+      case "DD/MM/YYYY": return format(date, "dd/MM/yyyy");
+      case "DD MMM YYYY": return format(date, "dd MMM yyyy");
+      case "DD MMMM YYYY": return format(date, "dd MMMM yyyy");
+      case "YYYY-MM-DD":
+      default: return format(date, "yyyy-MM-dd");
     }
-    setLocalValue(newVal);
-
-    // Debounced optimistic update: push changes to the store/sheet while typing
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      if (newVal !== String(value || "")) {
-        onChange(newVal);
-      }
-    }, 300);
   };
 
-  const handleSave = () => {
-    // Flush any pending debounced update immediately
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
+  // Sync from Calendar to Inputs and Parent
+  const handleSelectDate = (newDate: Date | undefined) => {
+    setDate(newDate);
+    if (newDate && isValid(newDate)) {
+      setDay(format(newDate, "dd"));
+      setMonth(format(newDate, "MM"));
+      setYear(format(newDate, "yyyy"));
+      setCalendarMonth(newDate);
+      onChange(format(newDate, "yyyy-MM-dd"));
+    } else {
+      setDay("");
+      setMonth("");
+      setYear("");
+      onChange("");
     }
-    if (localValue !== String(value || "")) {
-      useHistoryStore.getState().commit();
-      onChange(localValue);
+  };
+
+  // Sync from Inputs to Calendar and Parent
+  const handleInputUpdate = (d: string, m: string, y: string) => {
+    setDay(d);
+    setMonth(m);
+    setYear(y);
+
+    if (d.length > 0 && m.length > 0 && y.length === 4) {
+      const parsedDate = parse(`${y}-${m}-${d}`, "yyyy-MM-dd", new Date());
+      if (isValid(parsedDate)) {
+        setDate(parsedDate);
+        setCalendarMonth(parsedDate);
+        onChange(format(parsedDate, "yyyy-MM-dd"));
+      } else {
+        setDate(undefined);
+      }
+    } else {
+      setDate(undefined);
     }
   };
 
@@ -185,10 +203,13 @@ export const EditableText = ({
     fontSize: myStyle?.size ? (!isNaN(Number(myStyle?.size)) ? `${myStyle?.size}px` : myStyle?.size) : undefined,
   };
 
+  if (!myStyle?.color && company?.masterColor) {
+    styleObj.color = company.masterColor;
+  }
+
   useEffect(() => {
     if (openPopover && spanRef.current) {
       const style = window.getComputedStyle(spanRef.current);
-      // It typically returns pixels, e.g., "14px"
       setComputedSize(style.fontSize);
       
       const weight = style.fontWeight;
@@ -209,17 +230,12 @@ export const EditableText = ({
   }, [openPopover]);
 
   if (!isEditing) {
-    if (!value && value !== 0) return <span className={cn("inline-block min-h-[1em]", className)}>&nbsp;</span>;
-    return <span style={styleObj} className={cn("whitespace-pre-line break-words", className)}>{value}</span>;
+    if (!value) return <span className={cn("inline-block min-h-[1em]", className)}>&nbsp;</span>;
+    return <span style={styleObj} className={cn("whitespace-pre-line break-words", className)}>{getFormattedDisplay()}</span>;
   }
 
   return (
-    <Popover open={openPopover} onOpenChange={(open) => {
-      if (!open) {
-        handleSave(); // Save on close
-      }
-      setOpenPopover(open);
-    }}>
+    <Popover open={openPopover} onOpenChange={setOpenPopover}>
       <PopoverTrigger render={
         <button
           type="button"
@@ -233,20 +249,20 @@ export const EditableText = ({
             "relative before:absolute before:-inset-y-4 before:-inset-x-2 before:content-[''] before:z-0",
             className
           )}
-          title={developerMode && isAltHover && uniqueKey ? `Key: ${uniqueKey}` : "Double-click to edit text and formatting"}
+          title={developerMode && isAltHover && uniqueKey ? `Key: ${uniqueKey}` : "Double-click to edit date and formatting"}
           onMouseEnter={(e) => setIsAltHover(e.altKey)}
           onMouseMove={(e) => setIsAltHover(e.altKey)}
           onMouseLeave={() => setIsAltHover(false)}
         >
           <span className="relative z-10 flex items-center justify-between group/field">
-             <span ref={spanRef} style={styleObj}>{value || (placeholder ? <span className="opacity-40 italic font-normal">{placeholder}</span> : <span>&nbsp;</span>)}</span>
+             <span ref={spanRef} style={styleObj}>{getFormattedDisplay()}</span>
              {lockableKey && isLocked && (
                <Lock className="h-3 w-3 text-muted-foreground/40 opacity-100 ml-1 shrink-0" />
              )}
           </span>
         </button>
       } />
-
+      
       <PopoverContent className="w-[440px] p-2 flex flex-col gap-2 z-[200]" align="start" sideOffset={8}>
         {/* Formatting Toolbar */}
         <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-md border border-border">
@@ -260,7 +276,6 @@ export const EditableText = ({
                 <span className="truncate">{currentFontFamily}</span>
                 <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
               </Button>}>
-             
             </PopoverTrigger>
             <PopoverContent className="w-[200px] p-0 z-[210]" align="start">
               <Command>
@@ -359,36 +374,42 @@ export const EditableText = ({
           />
         </div>
 
-        {/* Editing Area */}
-        <div className="relative">
-          <textarea
-            autoFocus
-            className="w-full min-h-[80px] p-2 text-sm bg-background rounded-md border focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y"
-            value={localValue}
-            onChange={handleTextChange}
-            placeholder={placeholder}
-            style={styleObj}
+        {/* Date Editor Area */}
+        <div className="relative flex flex-col p-2 border border-border rounded-md bg-background">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={handleSelectDate}
+            month={calendarMonth}
+            onMonthChange={setCalendarMonth}
+
+            className="w-full flex justify-center [&>div]:w-full [&_table]:w-full [&_td]:w-full [&_button]:aspect-auto [&_button]:h-9"
           />
-          
-          {/* Autocomplete Dropdown */}
-          {options && options.length > 0 && (
-             <div className="mt-1 w-full bg-white border border-border shadow-md rounded-md max-h-[150px] overflow-y-auto">
-               <ul className="flex flex-col py-1 m-0 p-0 list-none">
-                 {options.filter(o => o.toLowerCase().includes(String(localValue || "").toLowerCase())).map((option) => (
-                   <li
-                     key={option}
-                     className="px-3 py-1.5 text-sm hover:bg-muted cursor-pointer"
-                     onClick={() => {
-                        setLocalValue(option);
-                        onChange(option);
-                     }}
-                   >
-                     {option}
-                   </li>
-                 ))}
-               </ul>
-             </div>
-          )}
+          <div className="flex gap-2 items-center justify-center mt-2 pt-4 border-t border-border">
+            <Input 
+              value={day} 
+              onChange={(e) => handleInputUpdate(e.target.value, month, year)} 
+              placeholder="DD" 
+              maxLength={2}
+              className="w-16 text-center h-9"
+            />
+            <span className="text-muted-foreground text-sm font-medium">/</span>
+            <Input 
+              value={month} 
+              onChange={(e) => handleInputUpdate(day, e.target.value, year)} 
+              placeholder="MM" 
+              maxLength={2}
+              className="w-16 text-center h-9"
+            />
+            <span className="text-muted-foreground text-sm font-medium">/</span>
+            <Input 
+              value={year} 
+              onChange={(e) => handleInputUpdate(day, month, e.target.value)} 
+              placeholder="YYYY" 
+              maxLength={4}
+              className="w-20 text-center h-9"
+            />
+          </div>
         </div>
 
         {/* Footer Actions */}
@@ -397,7 +418,7 @@ export const EditableText = ({
             <Button variant="ghost" size="sm" onClick={resetStyles} className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground">
               <RotateCcw className="w-3 h-3 mr-1" /> Reset Format
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => { setLocalValue(""); onChange(""); }} className="h-7 text-xs px-2 text-red-500 hover:text-red-600 hover:bg-red-50">
+            <Button variant="ghost" size="sm" onClick={() => { setDay(""); setMonth(""); setYear(""); setDate(undefined); onChange(""); }} className="h-7 text-xs px-2 text-red-500 hover:text-red-600 hover:bg-red-50">
               <Trash2 className="w-3 h-3 mr-1" /> Clear
             </Button>
             {lockableKey && (

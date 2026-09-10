@@ -66,7 +66,15 @@ pub fn init_db(app_handle: &AppHandle) -> Result<()> {
             master_font TEXT,
             master_font_variant TEXT,
             custom_labels TEXT,
-            master_color TEXT
+            master_color TEXT,
+            lockedFields TEXT,
+            columnWidths TEXT,
+            showBankDetails INTEGER,
+            showDigitalSignature INTEGER,
+            showSignatureImage INTEGER,
+            autoSaveProducts INTEGER,
+            billSize TEXT,
+            dateFormat TEXT
         )",
         [],
     )?;
@@ -166,6 +174,28 @@ pub fn init_db(app_handle: &AppHandle) -> Result<()> {
     let _ = conn.execute("ALTER TABLE invoices ADD COLUMN consigneePincode TEXT", []);
     let _ = conn.execute("ALTER TABLE invoices ADD COLUMN consigneeAddress TEXT", []);
     let _ = conn.execute("ALTER TABLE invoices ADD COLUMN consigneeStateCode TEXT", []);
+    
+    // New fields for immutable invoice snapshots
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_name TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_address_line_1 TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_address_line_2 TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_city TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_pincode TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_state TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_state_code TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_gst TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_email TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_phone TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN seller_logo TEXT", []);
+    
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN bank_name TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN bank_account_number TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN bank_ifsc_code TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN bank_account_name TEXT", []);
+    
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN signature_image TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN digital_signature_name TEXT", []);
+    
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN consigneeStateCode TEXT", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN modeOfPayment TEXT", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN buyerName TEXT", []);
@@ -191,7 +221,14 @@ pub fn init_db(app_handle: &AppHandle) -> Result<()> {
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN master_font_variant TEXT", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN custom_labels TEXT", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN master_color TEXT", []);
-
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN lockedFields TEXT", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN columnWidths TEXT", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN showBankDetails INTEGER", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN showDigitalSignature INTEGER", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN showSignatureImage INTEGER", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN autoSaveProducts INTEGER", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN billSize TEXT", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN dateFormat TEXT", []);
     conn.execute(
         "CREATE TABLE IF NOT EXISTS inventory_items (
             id TEXT PRIMARY KEY,

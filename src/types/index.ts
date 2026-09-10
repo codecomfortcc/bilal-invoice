@@ -57,6 +57,7 @@ export interface Company {
   destination?: string;
   invoiceNumber?: string;
   numberFormat?: string; // 'indian' | 'international'
+  dateFormat?: string;
   fieldStyles?: string; // JSON string of Record<string, { font?: string; bold?: boolean; italic?: boolean; underline?: boolean; color?: string; }>
 }
 
@@ -134,4 +135,27 @@ export interface InvoiceData {
   dispatchedThrough?: string;
   destination?: string;
   termsOfDelivery?: string;
+  
+  // My Details (Seller)
+  sellerName?: string;
+  sellerAddressLine1?: string;
+  sellerAddressLine2?: string;
+  sellerCity?: string;
+  sellerPincode?: string;
+  sellerState?: string;
+  sellerStateCode?: string;
+  sellerGst?: string;
+  sellerEmail?: string;
+  sellerPhone?: string;
+  sellerLogo?: string;
+
+  // Payee Details (Bank)
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
+  bankAccountName?: string;
+
+  // Signature
+  signatureImage?: string;
+  digitalSignatureName?: string;
 }

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Lock, Unlock, RotateCcw, Type, Baseline, CaseUpper, Check, ChevronsUpDown, Trash2 } from "lucide-react";
+import { Lock, Unlock, RotateCcw, Baseline, CaseUpper, Check, ChevronsUpDown, Minus, Plus } from "lucide-react";
 import { useCompanyStore, useHistoryStore, useUiStore } from "@/stores";
 import { saveCompanySettings } from "@/services/settings.service";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,7 +19,7 @@ const FALLBACK_FONTS = [
 
 const SIZES = ["10px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px"];
 
-export const EditableText = ({
+export const EditableQuantity = ({
   value,
   onChange,
   isEditing,
@@ -144,15 +144,29 @@ export const EditableText = ({
     saveCompanySettings(updatedCompany);
   };
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleIncrement = () => {
+    const current = Number(localValue) || 0;
+    const newVal = String(current + 1);
+    setLocalValue(newVal);
+    onChange(newVal);
+  };
+
+  const handleDecrement = () => {
+    const current = Number(localValue) || 0;
+    if (current > 1) {
+      const newVal = String(current - 1);
+      setLocalValue(newVal);
+      onChange(newVal);
+    }
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let newVal = e.target.value;
     if (numericOnly) {
-      // Allow only numbers, dot, and comma
       newVal = newVal.replace(/[^0-9.,]/g, '');
     }
     setLocalValue(newVal);
 
-    // Debounced optimistic update: push changes to the store/sheet while typing
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       if (newVal !== String(value || "")) {
@@ -360,15 +374,35 @@ export const EditableText = ({
         </div>
 
         {/* Editing Area */}
-        <div className="relative">
-          <textarea
-            autoFocus
-            className="w-full min-h-[80px] p-2 text-sm bg-background rounded-md border focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y"
-            value={localValue}
-            onChange={handleTextChange}
-            placeholder={placeholder}
-            style={styleObj}
-          />
+        <div className="relative py-4 flex items-center justify-center">
+          <div className="inline-flex items-center justify-center gap-1.5 group bg-background rounded-md px-2 py-1 border border-input shadow-sm transition-colors hover:border-ring/50 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
+            <button
+              onClick={handleDecrement}
+              className="w-8 h-8 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all outline-none"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            
+            <input
+              type="text"
+              autoFocus
+              value={localValue}
+              onChange={handleTextChange}
+              className="bg-transparent border-none outline-none text-center text-foreground font-medium p-0 m-0"
+              style={{
+                ...styleObj,
+                width: `${Math.max(1, localValue.length) + 1}ch`,
+                minWidth: "2ch",
+              }}
+            />
+            
+            <button
+              onClick={handleIncrement}
+              className="w-8 h-8 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all outline-none"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
           
           {/* Autocomplete Dropdown */}
           {options && options.length > 0 && (
@@ -397,22 +431,8 @@ export const EditableText = ({
             <Button variant="ghost" size="sm" onClick={resetStyles} className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground">
               <RotateCcw className="w-3 h-3 mr-1" /> Reset Format
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => { setLocalValue(""); onChange(""); }} className="h-7 text-xs px-2 text-red-500 hover:text-red-600 hover:bg-red-50">
-              <Trash2 className="w-3 h-3 mr-1" /> Clear
-            </Button>
-            {lockableKey && (
-              <Button
-                variant={isLocked ? "secondary" : "ghost"}
-                size="sm"
-                onClick={toggleLock}
-                className={cn("h-7 text-xs px-2", isLocked && "text-blue-600 bg-blue-50 hover:bg-blue-100")}
-              >
-                {isLocked ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1" />}
-                {isLocked ? "Locked" : "Lock Field"}
-              </Button>
-            )}
           </div>
-          <Button size="sm" onClick={() => setOpenPopover(false)} className="h-7 px-3 text-xs">
+          <Button size="sm" onClick={() => setOpenPopover(false)} className="h-7 px-4 text-xs font-semibold shadow-sm">
             Done
           </Button>
         </div>

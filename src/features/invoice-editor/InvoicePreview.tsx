@@ -14,9 +14,17 @@ import { saveInventoryItem } from "@/services/inventory.service";
 interface InvoicePreviewProps {
   data: InvoiceData;
   isEditing?: boolean;
+  onUpdateInvoice?: (updates: Partial<InvoiceData>) => void;
+  onUpdateCompany?: (updates: Partial<Company>) => void;
 }
 
 import { EditableText } from "./EditableText";
+import { EditableDate } from "./EditableDate";
+import { EditableImage } from "./EditableImage";
+import { EditableServices } from "./EditableServices";
+import { EditableQuantity } from "./EditableQuantity";
+import { EditableCash } from "./EditableCash";
+import { Rnd } from "react-rnd";
 
 export const CompanyContext = React.createContext<Company | null>(null);
 
@@ -50,7 +58,7 @@ const ColumnResizer = ({ width, onResize, onResizeEnd, isLeftAligned = false }: 
   );
 };
 
-export function InvoicePreview({ data, isEditing = false, overrideCompany }: InvoicePreviewProps & { overrideCompany?: Company | null }) {
+export function InvoicePreview({ data, isEditing = false, overrideCompany, onUpdateInvoice, onUpdateCompany }: InvoicePreviewProps & { overrideCompany?: Company | null }) {
   const globalCompany = useCompanyStore((state) => state.company);
   const { setCompany } = useCompanyStore();
   const company = overrideCompany || globalCompany;
@@ -97,8 +105,12 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
     useHistoryStore.getState().commit();
     const newWidths = { ...widths, [col]: newWidth };
     const updatedCompany = { ...company, columnWidths: JSON.stringify(newWidths) };
-    setCompany(updatedCompany);
-    saveCompanySettings(updatedCompany);
+    if (onUpdateCompany) {
+      onUpdateCompany({ columnWidths: JSON.stringify(newWidths) });
+    } else {
+      setCompany(updatedCompany);
+      saveCompanySettings(updatedCompany);
+    }
   };
 
   useEffect(() => {
@@ -106,29 +118,6 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
       fetchItems();
     }
   }, [isEditing, fetchItems, inventoryItems.length]);
-
-  const updateCompanyField = (field: keyof Company, value: any) => {
-    if (company) {
-      useHistoryStore.getState().commit();
-      const updated = { ...company, [field]: value };
-      setCompany(updated);
-      saveCompanySettings(updated);
-    }
-  };
-
-  const updateBankField = (field: string, value: string) => {
-    if (company) {
-      useHistoryStore.getState().commit();
-      let currentBank: any = {};
-      try {
-        currentBank = JSON.parse(company.bankDetails || "{}");
-      } catch (e) {}
-      currentBank[field] = value;
-      const updated = { ...company, bankDetails: JSON.stringify(currentBank) };
-      setCompany(updated);
-      saveCompanySettings(updated);
-    }
-  };
 
   const updateLabel = (key: string, value: string) => {
     if (company) {
@@ -139,6 +128,32 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
       } catch (e) {}
       labels[key] = value;
       const updated = { ...company, customLabels: JSON.stringify(labels) };
+      if (onUpdateCompany) {
+        onUpdateCompany({ customLabels: JSON.stringify(labels) });
+      } else {
+        setCompany(updated);
+        saveCompanySettings(updated);
+      }
+    }
+  };
+
+  const updateCompanyField = (field: keyof Company, value: any) => {
+    if (!company) return;
+    const updated = { ...company, [field]: value };
+    if (onUpdateCompany) {
+      onUpdateCompany({ [field]: value });
+    } else {
+      setCompany(updated);
+      saveCompanySettings(updated);
+    }
+  };
+
+  const updateCompanyFields = (updates: Partial<Company>) => {
+    if (!company) return;
+    const updated = { ...company, ...updates };
+    if (onUpdateCompany) {
+      onUpdateCompany(updates);
+    } else {
       setCompany(updated);
       saveCompanySettings(updated);
     }
@@ -146,26 +161,24 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
 
   const updateField = (field: keyof InvoiceData, value: any) => {
     useHistoryStore.getState().commit();
-    updateInvoiceData({ [field]: value });
-
-    // Save to permanent memory (company settings)
-    const persistentFields = [
-      "consigneeName", "consigneeAddressLine1", "consigneeAddressLine2", "consigneeCity", "consigneePincode", "consigneeAddress", "consigneeGst", "consigneeState", "consigneeStateCode",
-      "buyerName", "buyerAddressLine1", "buyerAddressLine2", "buyerCity", "buyerPincode", "buyerAddress", "buyerGst", "buyerState", "buyerStateCode",
-      "deliveryNote", "referenceNo", "otherReferences", "buyersOrderNo", "dispatchDocNo", "dispatchedThrough", "destination"
-    ];
-
-    if (persistentFields.includes(field as string) && company) {
-      const updatedCompany = { ...company, [field]: value };
-      setCompany(updatedCompany);
-      saveCompanySettings(updatedCompany);
+    if (onUpdateInvoice) {
+      onUpdateInvoice({ [field]: value });
+    } else {
+      updateInvoiceData({ [field]: value });
     }
   };
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: any) => {
     useHistoryStore.getState().commit();
     const newItems = [...data.items];
-    const item = { ...newItems[index], [field]: value };
+    
+    // Parse numeric fields
+    let parsedValue = value;
+    if (field === "quantity" || field === "rate" || field === "amount") {
+      parsedValue = Number(value) || 0;
+    }
+    
+    const item = { ...newItems[index], [field]: parsedValue };
 
     // Auto calculate amount
     if (field === "quantity" || field === "rate") {
@@ -176,7 +189,7 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
     if (field === "description") {
       const matchedProduct = inventoryItems.find((i) => i.title === value);
       if (matchedProduct) {
-        if (matchedProduct.hsn_sac) item.hsn = matchedProduct.hsn_sac;
+        if (matchedProduct.hsnSac) item.hsn = matchedProduct.hsnSac;
         if (matchedProduct.rate) item.rate = matchedProduct.rate;
         if (matchedProduct.unit) item.unit = matchedProduct.unit;
         item.amount = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
@@ -185,15 +198,28 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
 
     newItems[index] = item;
     const newTotal = calculateTotal(newItems);
-    updateInvoiceData({ items: newItems, total: newTotal, amountInWords: numberToWordsIndian(newTotal) });
+    const updates = { items: newItems, total: newTotal, amountInWords: numberToWordsIndian(newTotal) };
+    if (onUpdateInvoice) {
+      onUpdateInvoice(updates);
+    } else {
+      updateInvoiceData(updates);
+    }
 
     // Auto-save logic
+    // We only auto-save automatically for non-description fields (like rate, hsn)
+    // For description, we wait until the user finishes (onDone) to avoid spamming the DB
+    if (field !== "description") {
+      autoSaveInventoryProduct(item);
+    }
+  };
+
+  const autoSaveInventoryProduct = (item: InvoiceItem) => {
     if (autoSaveProducts && item.description && item.description.trim() !== "") {
       const existingItem = inventoryItems.find(i => i.title === item.description);
       const inventoryItemToSave = {
         id: existingItem?.id || `inv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         title: item.description,
-        hsn_sac: item.hsn,
+        hsnSac: item.hsn,
         unit: item.unit,
         rate: Number(item.rate) || 0,
       };
@@ -217,22 +243,27 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
       amount: 0,
     };
     const newItems = [...data.items, newItem];
-    updateInvoiceData({ items: newItems });
+    if (onUpdateInvoice) {
+      onUpdateInvoice({ items: newItems });
+    } else {
+      updateInvoiceData({ items: newItems });
+    }
   };
 
   const removeItem = (index: number) => {
     useHistoryStore.getState().commit();
     const newItems = data.items.filter((_, i) => i !== index);
     const newTotal = calculateTotal(newItems);
-    updateInvoiceData({ items: newItems, total: newTotal, amountInWords: numberToWordsIndian(newTotal) });
+    const updates = { items: newItems, total: newTotal, amountInWords: numberToWordsIndian(newTotal) };
+    if (onUpdateInvoice) {
+      onUpdateInvoice(updates);
+    } else {
+      updateInvoiceData(updates);
+    }
   };
 
-  let bankInfo: any = {};
-  if (company?.bankDetails) {
-    try {
-      bankInfo = JSON.parse(company.bankDetails);
-    } catch (e) {}
-  }
+  // removed bankInfo object condition
+
   const billSize = company?.billSize || "A4";
 
   const getPageDimensions = () => {
@@ -349,44 +380,44 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                   <div className="w-[50%] border-r border-black flex flex-col">
                     {/* Block 1: Company Details */}
                     <div className="p-1 border-b border-black flex flex-col group/company">
-                      <strong className="text-xs uppercase">
-                        <EditableText
+                      <div className="font-bold">
+                        <EditableText 
+                          isEditing={isEditing}
                           lockableKey="companyName"
-                          isEditing={isEditing}
-                          value={company?.name || ""}
-                          onChange={(v) => updateCompanyField("name", v)}
-                          placeholder="Company Name"
+                          value={data.sellerName || ""}
+                          onChange={(val) => updateInvoiceData({ sellerName: val })}
                           className="font-bold text-xs uppercase"
+                          placeholder="Company Name"
                         />
-                      </strong>
+                      </div>
                       <div className="text-[10px] leading-tight flex-1 mt-1 flex flex-col">
-                        <EditableText
-                          lockableKey="addressLine1"
+                        <EditableText 
                           isEditing={isEditing}
-                          value={company?.addressLine1 || ""}
-                          onChange={(v) => updateCompanyField("addressLine1", v)}
+                          lockableKey="addressLine1"
+                          value={data.sellerAddressLine1 || ""}
+                          onChange={(val) => updateInvoiceData({ sellerAddressLine1: val })}
                           placeholder="Address Line 1"
                         />
-                        <EditableText
-                          lockableKey="addressLine2"
+                        <EditableText 
                           isEditing={isEditing}
-                          value={company?.addressLine2 || ""}
-                          onChange={(v) => updateCompanyField("addressLine2", v)}
+                          lockableKey="addressLine2"
+                          value={data.sellerAddressLine2 || ""}
+                          onChange={(val) => updateInvoiceData({ sellerAddressLine2: val })}
                           placeholder="Address Line 2"
                         />
                         <div className="flex gap-1">
-                          <EditableText
-                            lockableKey="city"
+                          <EditableText 
                             isEditing={isEditing}
-                            value={company?.city || ""}
-                            onChange={(v) => updateCompanyField("city", v)}
+                            lockableKey="city"
+                            value={data.sellerCity || ""}
+                            onChange={(val) => updateInvoiceData({ sellerCity: val })}
                             placeholder="City"
                           />
-                          <EditableText
-                            lockableKey="pincode"
+                          <EditableText 
                             isEditing={isEditing}
-                            value={company?.pincode || ""}
-                            onChange={(v) => updateCompanyField("pincode", v)}
+                            lockableKey="pincode"
+                            value={data.sellerPincode || ""}
+                            onChange={(val) => updateInvoiceData({ sellerPincode: val })}
                             placeholder="Pincode"
                           />
                         </div>
@@ -402,8 +433,8 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                         <EditableText
                           lockableKey="email"
                           isEditing={isEditing}
-                          value={company?.email || ""}
-                          onChange={(v) => updateCompanyField("email", v)}
+                          value={data.sellerEmail || ""}
+                          onChange={(v) => updateInvoiceData({ sellerEmail: v })}
                           placeholder="Email Address"
                           className="ml-1 flex-1 !w-auto"
                         />
@@ -583,12 +614,11 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                     <div className="border-b border-black p-1 flex flex-col justify-start">
                       <span className="text-[9px]">Dated</span>
                       <strong className="mt-1">
-                        <EditableText
+                        <EditableDate
                           lockableKey="date"
                           isEditing={isEditing}
                           value={data.date || ""}
                           onChange={(v) => updateField("date", v)}
-                          type="date"
                           className="font-bold"
                         />
                       </strong>
@@ -614,8 +644,8 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                         <EditableText
                           lockableKey="modeOfPayment"
                           isEditing={isEditing}
-                          value={company?.modeOfPayment || ""}
-                          onChange={(v) => updateCompanyField("modeOfPayment", v)}
+                          value={data.modeOfPayment || ""}
+                          onChange={(v) => updateField("modeOfPayment", v)}
                           placeholder="Payment Terms"
                           className="font-bold"
                         />
@@ -667,12 +697,11 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                     <div className="border-b border-black p-1 flex flex-col justify-start">
                       <span className="text-[9px]">Dated</span>
                       <strong className="mt-1">
-                        <EditableText
+                        <EditableDate
                           lockableKey="buyersOrderDate"
                           isEditing={isEditing}
                           value={data.buyersOrderDate || ""}
                           onChange={(v) => updateField("buyersOrderDate", v)}
-                          type="date"
                           className="font-bold"
                         />
                       </strong>
@@ -695,12 +724,11 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                     <div className="border-b border-black p-1 flex flex-col justify-start">
                       <span className="text-[9px]">Delivery Note Date</span>
                       <strong className="mt-1">
-                        <EditableText
+                        <EditableDate
                           lockableKey="deliveryNoteDate"
                           isEditing={isEditing}
                           value={data.deliveryNoteDate || ""}
                           onChange={(v) => updateField("deliveryNoteDate", v)}
-                          type="date"
                           className="font-bold"
                         />
                       </strong>
@@ -741,8 +769,8 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                         <EditableText
                           lockableKey="termsOfDelivery"
                           isEditing={isEditing}
-                          value={company?.termsOfDelivery || ""}
-                          onChange={(v) => updateCompanyField("termsOfDelivery", v)}
+                          value={data.termsOfDelivery || ""}
+                          onChange={(v) => updateField("termsOfDelivery", v)}
                           multiline
                           placeholder="Terms of Delivery"
                           className="font-bold text-[10px]"
@@ -809,13 +837,19 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                           <div style={{ width: widths.sl }} className="p-1 pt-1.5 text-center break-words break-all shrink-0">{globalIndex + 1}</div>
                           <div className="flex-1 p-1 pl-2 pt-1.5 break-words break-all whitespace-normal">
                             <strong className="block">
-                              <EditableText
+                              <EditableServices
                                 isEditing={isEditing}
                                 value={item.description || ""}
                                 onChange={(v) => updateItem(globalIndex, "description", v)}
-                                options={inventoryItems.map(p => p.title)}
+                                onSelectProduct={(product) => {
+                                  updateItem(globalIndex, "description", product.title);
+                                }}
+                                onDone={(val) => {
+                                  autoSaveInventoryProduct({ ...item, description: val });
+                                }}
+                                inventoryItems={inventoryItems}
                                 placeholder="Item Description"
-                                className="font-bold"
+                                className="font-bold block w-full"
                                 styleKey={`item_desc_${globalIndex}`}
                               />
                             </strong>
@@ -831,25 +865,19 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                             />
                           </div>
                           <div style={{ width: widths.qty }} className="p-1 pt-1.5 text-center font-bold break-words break-all shrink-0">
-                            <EditableText
+                            <EditableQuantity
                               isEditing={isEditing}
                               value={item.quantity || ""}
                               onChange={(v) => updateItem(globalIndex, "quantity", v)}
-                              numericOnly={true}
                               className="text-center font-bold"
-                              placeholder="Qty"
-                              styleKey={`item_qty_${globalIndex}`}
                             />
                           </div>
                           <div style={{ width: widths.rate }} className="p-1 pr-2 pt-1.5 text-right break-words break-all shrink-0">
-                            <EditableText
+                            <EditableCash
                               isEditing={isEditing}
                               value={item.rate || ""}
                               onChange={(v) => updateItem(globalIndex, "rate", v)}
-                              numericOnly={true}
                               className="text-right"
-                              placeholder="Rate"
-                              styleKey={`item_rate_${globalIndex}`}
                             />
                           </div>
                           <div style={{ width: widths.per }} className="p-1 pt-1.5 text-center text-[10px] break-words break-all leading-tight flex items-start justify-center shrink-0">
@@ -940,19 +968,19 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                         <div className="pl-4 pb-1 grid grid-cols-[110px_1fr] text-[10px] leading-tight">
                           <span className="flex items-center">A/c Holder's Name</span>
                           <span className="flex items-center">
-                            : <EditableText lockableKey="accountName" isEditing={isEditing} value={bankInfo.accountName || ""} onChange={(v) => updateBankField("accountName", v)} className="ml-1" placeholder="Name" />
+                            : <EditableText lockableKey="accountName" isEditing={isEditing} value={data.bankAccountName || ""} onChange={(v) => updateInvoiceData({ bankAccountName: v })} className="ml-1" placeholder="Name" />
                           </span>
                           <span className="flex items-center">Bank Name</span>
                           <span className="flex items-center">
-                            : <EditableText lockableKey="bankName" isEditing={isEditing} value={bankInfo.bankName || ""} onChange={(v) => updateBankField("bankName", v)} className="font-bold ml-1" placeholder="Bank" />
+                            : <EditableText lockableKey="bankName" isEditing={isEditing} value={data.bankName || ""} onChange={(v) => updateInvoiceData({ bankName: v })} className="font-bold ml-1" placeholder="Bank" />
                           </span>
                           <span className="flex items-center">A/c No.</span>
                           <span className="flex items-center">
-                            : <EditableText lockableKey="accountNumber" isEditing={isEditing} value={bankInfo.accountNumber || ""} onChange={(v) => updateBankField("accountNumber", v)} className="ml-1" placeholder="A/C No." />
+                            : <EditableText lockableKey="accountNumber" isEditing={isEditing} value={data.bankAccountNumber || ""} onChange={(v) => updateInvoiceData({ bankAccountNumber: v })} className="ml-1" placeholder="A/C No." />
                           </span>
                           <span className="flex items-center">Branch & IFS Code</span>
                           <span className="flex items-center">
-                            : <EditableText lockableKey="ifscCode" isEditing={isEditing} value={bankInfo.ifscCode || ""} onChange={(v) => updateBankField("ifscCode", v)} className="ml-1" placeholder="IFSC" />
+                            : <EditableText lockableKey="ifscCode" isEditing={isEditing} value={data.bankIfscCode || ""} onChange={(v) => updateInvoiceData({ bankIfscCode: v })} className="ml-1" placeholder="IFSC" />
                           </span>
                         </div>
                       </div>
@@ -967,10 +995,9 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                               </span>
                               <strong className="text-[14px] mt-0.5 break-words text-black/90 leading-tight">
                                 <EditableText
-                                  lockableKey="digitalSignatureName"
                                   isEditing={isEditing}
                                   value={company?.digitalSignatureName || ""}
-                                  onChange={(v) => updateCompanyField("digitalSignatureName", v)}
+                                  onChange={(val) => updateCompanyField("digitalSignatureName", val)}
                                   placeholder="Signatory Name"
                                   className={cn("font-bold text-[14px] !w-auto whitespace-nowrap", !showSignatureImage && "text-center")}
                                 />
@@ -988,19 +1015,37 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany }: Inv
                           
                           {showSignatureImage && (
                             <div className={cn("flex flex-col items-center justify-end w-[160px] z-10 relative group/section", (!showDigitalSignature) ? "mx-auto" : "ml-auto")}>
-                              {company?.signature ? (
-                                <div className="w-full flex justify-center pointer-events-none mb-1">
-                                  <img
-                                    src={company.signature}
-                                    alt="Authorized Signature"
-                                    className="max-h-[45px] object-contain mix-blend-multiply"
-                                    style={{
-                                      transform: `translate(${company?.signatureOffsetX || 0}px, ${company?.signatureOffsetY || 0}px) scale(${(company?.signatureScale || 1) * 1.35})`,
-                                      transformOrigin: "bottom center",
-                                    }}
+                              <div className="relative w-full h-16 pointer-events-none flex items-end justify-center">
+                                <Rnd
+                                  disableDragging={!isEditing}
+                                  enableResizing={isEditing}
+                                  position={{ x: company?.signatureOffsetX || 0, y: company?.signatureOffsetY || 0 }}
+                                  size={{ width: 160 * (company?.signatureScale || 1) * 1.35, height: 'auto' }}
+                                  onDragStop={(e, d) => {
+                                    updateCompanyFields({
+                                      signatureOffsetX: d.x,
+                                      signatureOffsetY: d.y,
+                                    });
+                                  }}
+                                  onResizeStop={(e, direction, ref, delta, position) => {
+                                    const newScale = ref.offsetWidth / (160 * 1.35);
+                                    updateCompanyFields({
+                                      signatureScale: newScale,
+                                      signatureOffsetX: position.x,
+                                      signatureOffsetY: position.y,
+                                    });
+                                  }}
+                                  className={cn("absolute z-20", isEditing && "hover:ring-1 ring-blue-500/50 rounded pointer-events-auto")}
+                                >
+                                  <EditableImage
+                                    isEditing={isEditing}
+                                    value={company?.signature || ""}
+                                    onChange={(v) => updateCompanyField("signature", v)}
+                                    placeholder="Upload Signature"
+                                    className="w-full h-full object-contain pointer-events-auto"
                                   />
-                                </div>
-                              ) : null}
+                                </Rnd>
+                              </div>
                               <span className="text-[10px] font-semibold text-black/90 whitespace-nowrap pt-4 mt-auto">
                                 Authorized Signatory
                               </span>

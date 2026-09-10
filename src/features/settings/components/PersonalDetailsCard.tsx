@@ -104,6 +104,32 @@ export function PersonalDetailsCard() {
               )}
             />
           </div>
+          
+          <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+            <div className="space-y-0.5">
+              <h4 className="text-[13px] font-medium text-foreground">Date Format</h4>
+              <p className="text-[11px] text-muted-foreground">Choose how dates are rendered on invoices.</p>
+            </div>
+            <Controller
+              control={form.control}
+              name="dateFormat"
+              render={({ field }) => (
+                <Select value={field.value || "YYYY-MM-DD"} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select date format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="YYYY-MM-DD">2026-09-09 (YYYY-MM-DD)</SelectItem>
+                    <SelectItem value="DD-MM-YYYY">09-09-2026 (DD-MM-YYYY)</SelectItem>
+                    <SelectItem value="DD-MM-YY">09-09-26 (DD-MM-YY)</SelectItem>
+                    <SelectItem value="DD/MM/YYYY">09/09/2026 (DD/MM/YYYY)</SelectItem>
+                    <SelectItem value="DD MMM YYYY">09 Sep 2026</SelectItem>
+                    <SelectItem value="DD MMMM YYYY">09 September 2026</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
         </div>
 
         {/* Digital Signature */}

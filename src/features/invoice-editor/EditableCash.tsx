@@ -19,7 +19,7 @@ const FALLBACK_FONTS = [
 
 const SIZES = ["10px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px"];
 
-export const EditableText = ({
+export const EditableCash = ({
   value,
   onChange,
   isEditing,
@@ -144,32 +144,38 @@ export const EditableText = ({
     saveCompanySettings(updatedCompany);
   };
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    let newVal = e.target.value;
-    if (numericOnly) {
-      // Allow only numbers, dot, and comma
-      newVal = newVal.replace(/[^0-9.,]/g, '');
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let newVal = e.target.value.replace(/[^0-9.]/g, "");
+    
+    const parts = newVal.split(".");
+    if (parts.length > 2) {
+      newVal = parts[0] + "." + parts.slice(1).join("");
     }
+    
     setLocalValue(newVal);
 
-    // Debounced optimistic update: push changes to the store/sheet while typing
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       if (newVal !== String(value || "")) {
         onChange(newVal);
       }
-    }, 300);
+    }, 400);
   };
 
   const handleSave = () => {
-    // Flush any pending debounced update immediately
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    
+    let finalValue = localValue;
+    if (localValue && !isNaN(Number(localValue))) {
+      finalValue = Number(localValue).toFixed(2);
+      if (finalValue !== localValue) {
+        setLocalValue(finalValue);
+      }
     }
-    if (localValue !== String(value || "")) {
+    
+    if (finalValue !== String(value || "")) {
       useHistoryStore.getState().commit();
-      onChange(localValue);
+      onChange(finalValue);
     }
   };
 
@@ -360,15 +366,22 @@ export const EditableText = ({
         </div>
 
         {/* Editing Area */}
-        <div className="relative">
-          <textarea
-            autoFocus
-            className="w-full min-h-[80px] p-2 text-sm bg-background rounded-md border focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y"
-            value={localValue}
-            onChange={handleTextChange}
-            placeholder={placeholder}
-            style={styleObj}
-          />
+        <div className="relative py-4 flex items-center justify-center">
+          <div className="inline-flex items-center justify-end gap-1 bg-background rounded-md px-3 py-2 border border-input shadow-sm transition-colors hover:border-ring/50 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
+            <span className="text-muted-foreground font-medium select-none text-lg">₹</span>
+            <input
+              type="text"
+              autoFocus
+              value={localValue}
+              onChange={handleTextChange}
+              className="bg-transparent border-none outline-none text-right text-foreground font-medium p-0 m-0 text-lg"
+              style={{
+                ...styleObj,
+                width: `${Math.max(1, localValue.length) + 1}ch`,
+                minWidth: "3ch",
+              }}
+            />
+          </div>
           
           {/* Autocomplete Dropdown */}
           {options && options.length > 0 && (
@@ -397,22 +410,8 @@ export const EditableText = ({
             <Button variant="ghost" size="sm" onClick={resetStyles} className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground">
               <RotateCcw className="w-3 h-3 mr-1" /> Reset Format
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => { setLocalValue(""); onChange(""); }} className="h-7 text-xs px-2 text-red-500 hover:text-red-600 hover:bg-red-50">
-              <Trash2 className="w-3 h-3 mr-1" /> Clear
-            </Button>
-            {lockableKey && (
-              <Button
-                variant={isLocked ? "secondary" : "ghost"}
-                size="sm"
-                onClick={toggleLock}
-                className={cn("h-7 text-xs px-2", isLocked && "text-blue-600 bg-blue-50 hover:bg-blue-100")}
-              >
-                {isLocked ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1" />}
-                {isLocked ? "Locked" : "Lock Field"}
-              </Button>
-            )}
           </div>
-          <Button size="sm" onClick={() => setOpenPopover(false)} className="h-7 px-3 text-xs">
+          <Button size="sm" onClick={() => setOpenPopover(false)} className="h-7 px-4 text-xs font-semibold shadow-sm">
             Done
           </Button>
         </div>
@@ -420,3 +419,4 @@ export const EditableText = ({
     </Popover>
   );
 };
+

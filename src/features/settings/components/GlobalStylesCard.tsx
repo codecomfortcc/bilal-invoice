@@ -175,18 +175,8 @@ export function GlobalStylesCard() {
               <SelectValue placeholder="Variant" />
             </SelectTrigger>
             <SelectContent>
-              {availableVariants.map((v) => (
-                <SelectItem
-                  key={v}
-                  value={v}
-                  className={cn(
-                    v.includes("Bold") && "font-bold",
-                    v.includes("Italic") && "italic",
-                  )}
-                >
-                  {formatFontVariant(v)}
-                </SelectItem>
-              ))}
+              <SelectItem value="Regular">Regular</SelectItem>
+              <SelectItem value="Italic" className="italic">Italic</SelectItem>
             </SelectContent>
           </Select>
         </div>

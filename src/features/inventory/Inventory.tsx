@@ -26,7 +26,7 @@ export function Inventory() {
       setEditingItem({
         id: `item_${Date.now()}`,
         title: "",
-        hsn_sac: "",
+        hsnSac: "",
         rate: 0,
         unit: "pcs",
       });
@@ -103,8 +103,8 @@ export function Inventory() {
               <Label htmlFor="hsn_sac" className="text-xs font-medium text-foreground/80">HSN/SAC Code</Label>
               <Input
                 id="hsn_sac"
-                value={editingItem?.hsn_sac || ""}
-                onChange={(e) => setEditingItem(prev => prev ? { ...prev, hsn_sac: e.target.value } : null)}
+                value={editingItem?.hsnSac || ""}
+                onChange={(e) => setEditingItem(prev => prev ? { ...prev, hsnSac: e.target.value } : null)}
                 placeholder="e.g. 8471"
               />
             </div>
@@ -155,9 +155,9 @@ export function Inventory() {
                     <CardTitle className="text-[15px] font-semibold tracking-tight line-clamp-2 leading-tight text-foreground/90 group-hover:text-foreground transition-colors" title={item.title}>
                       {item.title}
                     </CardTitle>
-                    {item.hsn_sac && (
+                    {item.hsnSac && (
                       <div className="mt-1.5 inline-flex items-center rounded-sm bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-white/10">
-                        HSN/SAC: {item.hsn_sac}
+                        HSN/SAC: {item.hsnSac}
                       </div>
                     )}
                   </div>
