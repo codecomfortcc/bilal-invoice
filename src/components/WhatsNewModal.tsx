@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { useUiStore } from "@/stores";
-import { CHANGELOG } from "@/data/changelog";
 import {
   Dialog,
   DialogContent,
@@ -14,11 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import semver from "semver";
 import { ReleaseNotesView } from "@/components/ReleaseNotesView";
-import type { ParsedReleaseNotes } from "@/lib/releaseNotesParser";
+import { parseReleaseNotes, type ParsedReleaseNotes } from "@/lib/releaseNotesParser";
 
 export function WhatsNewModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<string>("");
+  const [notes, setNotes] = useState<ParsedReleaseNotes | null>(null);
   const { lastSeenVersion, setLastSeenVersion } = useUiStore();
 
   useEffect(() => {
@@ -28,11 +28,27 @@ export function WhatsNewModal() {
         setCurrentVersion(appVersion);
 
         if (!lastSeenVersion || semver.gt(appVersion, lastSeenVersion)) {
-          if (CHANGELOG[appVersion]) {
-            setIsOpen(true);
-          } else {
-            setLastSeenVersion(appVersion);
+          try {
+            // Fetch live release notes from GitHub API
+            const res = await fetch(`https://api.github.com/repos/codecomfortcc/bilal-invoice/releases/tags/v${appVersion}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.body) {
+                const parsed = parseReleaseNotes(data.body);
+                // If it has at least one section with items, show it
+                if (Object.keys(parsed).length > 0) {
+                  setNotes(parsed);
+                  setIsOpen(true);
+                  return; // Wait for user to click "I Understand" before setting lastSeenVersion
+                }
+              }
+            }
+          } catch (githubErr) {
+            console.error("Failed to fetch live release notes", githubErr);
           }
+          
+          // Fallback if no notes or fetch failed
+          setLastSeenVersion(appVersion);
         }
       } catch (e) {
         console.error("Failed to check version for What's New modal", e);
@@ -52,14 +68,6 @@ export function WhatsNewModal() {
       setLastSeenVersion(currentVersion);
     }
   };
-
-  const rawNotes = currentVersion ? CHANGELOG[currentVersion] : null;
-  // Map ChangelogVersion to ParsedReleaseNotes format
-  const notes: ParsedReleaseNotes | null = rawNotes ? {
-    features: rawNotes.features || [],
-    fixes: rawNotes.fixes || [],
-    improvements: rawNotes.improvements || []
-  } : null;
 
   if (!notes) return null;
 

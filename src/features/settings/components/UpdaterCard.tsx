@@ -66,6 +66,17 @@ export function UpdaterCard() {
     try {
       const update = await invoke<UpdateInfo | null>("check_for_updates");
       if (update) {
+        try {
+          const res = await fetch(`https://api.github.com/repos/codecomfortcc/bilal-invoice/releases/tags/v${update.version}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.body) {
+              update.body = data.body;
+            }
+          }
+        } catch (githubErr) {
+          console.error("Failed to fetch live release notes", githubErr);
+        }
         setUpdateInfo(update);
         addLog("success", `Update available: v${update.version}`, update.body || undefined);
         if (developerMode) {

@@ -50,7 +50,13 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Bilal Invoice ${{ github.ref_name }}'
-          releaseBody: 'See the assets to download this version and install.'
+          releaseBody: |
+            ### Features
+            - **Dynamic Release Notes:** The app now fetches live updates directly from GitHub! You will see real-time release notes before downloading.
+            - **Automated What's New:** The post-update popup now dynamically pulls your release notes, eliminating the need to update internal changelogs.
+            
+            ### Improvements
+            - Redesigned the History page to follow the sleek Windows 11 Fluent Design system (Acrylic blurs, flat interactions, monoline icons).
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
