@@ -211,7 +211,7 @@ export function GlobalStylesCard() {
           <Button
             onClick={handleResetStyles}
             variant="outline"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0"
+            className="text-red-400 hover:text-red-300 hover:bg-red-400/10 shrink-0"
             size="sm"
           >
             Reset Styles

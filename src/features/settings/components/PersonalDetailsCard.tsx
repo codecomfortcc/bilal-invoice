@@ -191,7 +191,7 @@ export function PersonalDetailsCard() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="text-destructive hover:text-destructive shadow-none"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-400/10 shadow-none"
                       onClick={() => form.setValue("signature", "", { shouldDirty: true })}
                     >
                       <X className="h-4 w-4 mr-1" /> Remove

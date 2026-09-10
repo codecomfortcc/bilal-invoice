@@ -363,9 +363,19 @@ export const EditableText = ({
         <div className="relative">
           <textarea
             autoFocus
-            className="w-full min-h-[80px] p-2 text-sm bg-background rounded-md border focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y"
+            className="w-full min-h-[72px] p-2 text-sm bg-background rounded-md border border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shadow-sm resize-none overflow-hidden"
             value={localValue}
-            onChange={handleTextChange}
+            onChange={(e) => {
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+              handleTextChange(e);
+            }}
+            ref={(e) => {
+              if (e) {
+                e.style.height = 'auto';
+                e.style.height = e.scrollHeight + 'px';
+              }
+            }}
             placeholder={placeholder}
             style={styleObj}
           />
@@ -397,15 +407,15 @@ export const EditableText = ({
             <Button variant="ghost" size="sm" onClick={resetStyles} className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground">
               <RotateCcw className="w-3 h-3 mr-1" /> Reset Format
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => { setLocalValue(""); onChange(""); }} className="h-7 text-xs px-2 text-red-500 hover:text-red-600 hover:bg-red-50">
+            <Button variant="ghost" size="sm" onClick={() => { setLocalValue(""); onChange(""); }} className="h-7 text-xs px-2 text-red-400 hover:text-red-300 hover:bg-red-400/10">
               <Trash2 className="w-3 h-3 mr-1" /> Clear
             </Button>
             {lockableKey && (
               <Button
-                variant={isLocked ? "secondary" : "ghost"}
+                variant="ghost"
                 size="sm"
                 onClick={toggleLock}
-                className={cn("h-7 text-xs px-2", isLocked && "text-blue-600 bg-blue-50 hover:bg-blue-100")}
+                className={cn("h-7 text-xs px-2", isLocked && "bg-primary/15 text-primary hover:bg-primary/25")}
               >
                 {isLocked ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1" />}
                 {isLocked ? "Locked" : "Lock Field"}

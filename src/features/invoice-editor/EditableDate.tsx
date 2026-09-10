@@ -418,15 +418,15 @@ export const EditableDate = ({
             <Button variant="ghost" size="sm" onClick={resetStyles} className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground">
               <RotateCcw className="w-3 h-3 mr-1" /> Reset Format
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => { setDay(""); setMonth(""); setYear(""); setDate(undefined); onChange(""); }} className="h-7 text-xs px-2 text-red-500 hover:text-red-600 hover:bg-red-50">
+            <Button variant="ghost" size="sm" onClick={() => { setDay(""); setMonth(""); setYear(""); setDate(undefined); onChange(""); }} className="h-7 text-xs px-2 text-red-400 hover:text-red-300 hover:bg-red-400/10">
               <Trash2 className="w-3 h-3 mr-1" /> Clear
             </Button>
             {lockableKey && (
               <Button
-                variant={isLocked ? "secondary" : "ghost"}
+                variant="ghost"
                 size="sm"
                 onClick={toggleLock}
-                className={cn("h-7 text-xs px-2", isLocked && "text-blue-600 bg-blue-50 hover:bg-blue-100")}
+                className={cn("h-7 text-xs px-2", isLocked && "bg-primary/15 text-primary hover:bg-primary/25")}
               >
                 {isLocked ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1" />}
                 {isLocked ? "Locked" : "Lock Field"}

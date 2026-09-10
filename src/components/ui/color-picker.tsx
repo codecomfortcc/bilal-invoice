@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paintbrush } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PRESET_COLORS = [
@@ -53,7 +52,10 @@ export function ColorPicker({ color, onChange, className }: ColorPickerProps) {
           className={cn("w-8 h-8 p-0 flex items-center justify-center", className)}
           title="Text Color"
         >
-          <Paintbrush className="w-4 h-4" style={{ color: color || "currentColor" }} />
+          <div 
+            className="w-3.5 h-3.5 rounded-sm ring-1 ring-offset-1 ring-black dark:ring-white ring-offset-background shadow-sm"
+            style={{ backgroundColor: color || "#000000" }} 
+          />
         </Button>} />
       <PopoverContent className="w-64 p-3" align="start">
         <div className="flex flex-col gap-3">

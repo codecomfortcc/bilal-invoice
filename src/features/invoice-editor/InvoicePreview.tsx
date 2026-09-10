@@ -344,19 +344,19 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany, onUpd
                   </span>
                 )}
               </div>
-              <div className="w-1/3 text-center">
+              <div className="w-1/3 text-center flex flex-col items-center justify-center">
                 <EditableText
                   isEditing={isEditing}
                   value={labels['taxInvoice'] || "Tax Invoice"}
                   onChange={(v) => updateLabel('taxInvoice', v)}
-                  className="font-bold text-lg leading-tight inline-block !w-auto"
+                  className="font-bold text-lg leading-tight !w-auto text-center"
                   styleKey="taxInvoice"
                 />
                 <EditableText
                   isEditing={isEditing}
                   value={labels['billOfSupply'] || "Bill of Supply"}
                   onChange={(v) => updateLabel('billOfSupply', v)}
-                  className="text-[10px] inline-block !w-auto"
+                  className="text-[10px] leading-tight !w-auto text-center"
                   styleKey="billOfSupply"
                 />
               </div>
@@ -897,7 +897,7 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany, onUpd
                             <div className="absolute right-0 translate-x-full top-0 h-full flex items-center justify-center px-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
                                 onClick={() => removeItem(globalIndex)}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded p-1"
+                                className="text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded p-1"
                                 title="Remove Item"
                               >
                                 <Trash2 size={12} />

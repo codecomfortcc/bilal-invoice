@@ -490,7 +490,7 @@ export const EditableServices = ({
                 setLocalValue("");
                 onChange("");
               }}
-              className="h-7 text-xs px-2 text-red-500 hover:text-red-600 hover:bg-red-50"
+              className="h-7 text-xs px-2 text-red-400 hover:text-red-300 hover:bg-red-400/10"
             >
               <Trash2 className="w-3 h-3 mr-1" /> Clear
             </Button>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { getVersion } from "@tauri-apps/api/app";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -21,8 +22,11 @@ export function UpdaterCard() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [progress, setProgress] = useState(0);
+  const [currentVersion, setCurrentVersion] = useState<string>("");
 
   useEffect(() => {
+    getVersion().then(setCurrentVersion).catch(console.error);
+
     const unlistenProgress = listen<ProgressPayload>("updater-progress", (event) => {
       const { downloaded, total } = event.payload;
       if (total) {
@@ -81,8 +85,17 @@ export function UpdaterCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Application Update</CardTitle>
-        <CardDescription>Check for new versions and install updates automatically.</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Application Update</CardTitle>
+            <CardDescription>Check for new versions and install updates automatically.</CardDescription>
+          </div>
+          {currentVersion && (
+            <div className="text-sm font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-md">
+              v{currentVersion}
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {updateInfo ? (

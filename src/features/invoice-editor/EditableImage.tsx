@@ -255,7 +255,7 @@ export const EditableImage = ({
         {/* Footer Actions */}
         {!imageSrc && (
           <div className="flex items-center justify-between pt-2 border-t mt-1">
-            <Button variant="ghost" size="sm" onClick={handleClear} className="h-7 text-xs px-2 text-red-500 hover:text-red-600 hover:bg-red-50">
+            <Button variant="ghost" size="sm" onClick={handleClear} className="h-7 text-xs px-2 text-red-400 hover:text-red-300 hover:bg-red-400/10">
               <Trash2 className="w-3 h-3 mr-1" /> Clear
             </Button>
             <Button size="sm" onClick={() => setOpenPopover(false)} className="h-7 px-3 text-xs">
