@@ -150,20 +150,19 @@ export function HistoryPage() {
   if (invoices.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 bg-transparent">
-        <div className="flex flex-col items-center justify-center p-12 bg-card/60 backdrop-blur-2xl border border-white/10 dark:border-white/5 rounded-2xl shadow-lg max-w-md w-full text-center">
-          <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-primary/10 text-primary mb-6 ring-1 ring-primary/20">
-            <FileArchive className="h-8 w-8" />
+        <div className="flex flex-col items-center justify-center p-8 bg-card/60 backdrop-blur-2xl border border-border/50 rounded-lg shadow-sm max-w-sm w-full text-center">
+          <div className="flex items-center justify-center mb-4 text-muted-foreground/70">
+            <FileArchive className="h-12 w-12 stroke-[1.5]" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground tracking-tight mb-2">
+          <h2 className="text-[15px] font-semibold text-foreground tracking-tight mb-2">
             No exported invoices
           </h2>
-          <p className="text-[13px] text-muted-foreground mb-8">
+          <p className="text-[13px] text-muted-foreground mb-6 leading-relaxed">
             Your generated PDF invoices will appear here automatically. Generate
             your first invoice to get started.
           </p>
           <Button
-            variant="default"
-            className="w-full shadow-sm rounded-lg"
+            className="w-full h-8 text-[13px] rounded-md shadow-sm"
             onClick={() => navigate("/")}
           >
             Create Invoice
@@ -174,48 +173,36 @@ export function HistoryPage() {
   }
 
   return (
-    <div className="h-full overflow-auto p-6 md:p-10 custom-scrollbar bg-background/50 backdrop-blur-3xl relative">
-      <div className="max-w-[1200px] mx-auto space-y-6 relative z-10">
+    <div className="h-full overflow-auto p-6 md:p-8 custom-scrollbar bg-transparent">
+      <div className="max-w-[1200px] mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground font-sans">
             Export History
           </h1>
-          <p className="text-[13px] text-muted-foreground mt-1.5">
+          <p className="text-[13px] text-muted-foreground mt-1 font-sans">
             View and manage your previously generated PDF invoices.
           </p>
         </div>
 
-        <Card className="border-white/20 dark:border-white/10 bg-card/60 backdrop-blur-2xl shadow-sm overflow-hidden rounded-xl">
+        <Card className="border-border/50 bg-card/60 backdrop-blur-2xl shadow-sm rounded-lg overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-transparent">
-                  <TableRow className="border-b border-white/10 hover:bg-transparent">
-                    <TableHead className="w-[160px] font-medium text-xs text-muted-foreground h-11">
-                      <div className="flex items-center">
-                        <Hash className="w-3.5 h-3.5 mr-2 opacity-70" /> Invoice
-                        Number
-                      </div>
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="border-b border-border/50 hover:bg-transparent">
+                    <TableHead className="w-[180px] font-medium text-[12px] text-muted-foreground h-10 px-4">
+                      Invoice Number
                     </TableHead>
-                    <TableHead className="font-medium text-xs text-muted-foreground h-11">
-                      <div className="flex items-center">
-                        <FileText className="w-3.5 h-3.5 mr-2 opacity-70" />{" "}
-                        File Name
-                      </div>
+                    <TableHead className="font-medium text-[12px] text-muted-foreground h-10">
+                      File Name
                     </TableHead>
-                    <TableHead className="w-[200px] font-medium text-xs text-muted-foreground h-11">
-                      <div className="flex items-center">
-                        <Clock className="w-3.5 h-3.5 mr-2 opacity-70" /> Export
-                        Date
-                      </div>
+                    <TableHead className="w-[180px] font-medium text-[12px] text-muted-foreground h-10">
+                      Export Date
                     </TableHead>
-                    <TableHead className="w-[280px] font-medium text-xs text-muted-foreground h-11">
-                      <div className="flex items-center">
-                        <Folder className="w-3.5 h-3.5 mr-2 opacity-70" />{" "}
-                        Location
-                      </div>
+                    <TableHead className="w-[300px] font-medium text-[12px] text-muted-foreground h-10">
+                      Location
                     </TableHead>
-                    <TableHead className="text-right font-medium text-xs text-muted-foreground h-11 w-[180px]">
+                    <TableHead className="text-right font-medium text-[12px] text-muted-foreground h-10 w-[200px] px-4">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -224,116 +211,100 @@ export function HistoryPage() {
                   {invoices.map((invoice) => (
                     <TableRow
                       key={invoice.id}
-                      className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 group h-14"
+                      className="hover:bg-muted/50 transition-none border-b border-border/50 last:border-0 h-12"
                     >
-                      <TableCell className="font-medium text-[13px]">
-                        {invoice.invoiceNumber || "Draft"}
+                      <TableCell className="font-medium text-[13px] px-4">
+                        {invoice.invoiceNumber ? (
+                          <span className="text-foreground">{invoice.invoiceNumber}</span>
+                        ) : (
+                          <span className="text-muted-foreground italic">Draft</span>
+                        )}
                       </TableCell>
-                      <TableCell className="font-medium text-[13px] text-foreground">
-                        {invoice.exportFileName}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-[12px] tabular-nums">
-                        {invoice.exportDate
-                          ? new Date(invoice.exportDate).toLocaleString(
-                              undefined,
-                              {
-                                dateStyle: "medium",
-                                timeStyle: "short",
-                              },
-                            )
-                          : "Unknown"}
-                      </TableCell>
-                      <TableCell>
-                        <div
-                          className="flex items-center text-muted-foreground text-[12px] max-w-[250px]"
-                          title={invoice.exportFolder}
-                        >
-                          <span className="truncate">
-                            {invoice.exportFolder}
+                      <TableCell className="text-[13px]">
+                        <div className="flex items-center text-foreground">
+                          <FileText className="w-4 h-4 mr-2.5 opacity-70 stroke-[1.5]" />
+                          <span className="truncate max-w-[200px]" title={invoice.exportFileName}>
+                            {invoice.exportFileName}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <TableCell className="text-muted-foreground text-[12px] tabular-nums">
+                        {invoice.exportDate ? (
+                          <span>
+                            {new Date(invoice.exportDate).toLocaleString(undefined, { 
+                              year: 'numeric', 
+                              month: '2-digit', 
+                              day: '2-digit', 
+                              hour: 'numeric', 
+                              minute: '2-digit' 
+                            })}
+                          </span>
+                        ) : (
+                          "Unknown"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center max-w-[280px]">
+                          <div className="flex items-center text-[12px] text-muted-foreground truncate" title={invoice.exportFolder}>
+                            <Folder className="w-4 h-4 mr-2 opacity-50 shrink-0 stroke-[1.5]" />
+                            <span className="truncate">{invoice.exportFolder}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right px-4">
+                        <div className="flex justify-end gap-1.5">
                           <Dialog>
-                            <DialogTrigger
-                              render={
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 px-3 text-[12px] rounded-md hover:bg-black/5 dark:hover:bg-white/10"
-                                >
-                                  <Share2 className="h-3 w-3 mr-1.5" /> Share
-                                </Button>
-                              }
-                            ></DialogTrigger>
-                            <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-3xl border-white/20 dark:border-white/10 rounded-xl overflow-hidden p-0 shadow-2xl">
-                              <DialogHeader className="p-5 pb-3">
-                                <DialogTitle className="text-xl font-semibold">
-                                  Share
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2.5 text-[12px] rounded-md hover:bg-muted font-normal"
+                              >
+                                <Share2 className="h-3.5 w-3.5 mr-1.5 stroke-[1.5]" /> Share
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-sm bg-card/90 backdrop-blur-2xl border-border/50 rounded-lg p-0 shadow-lg">
+                              <DialogHeader className="p-4 pb-2">
+                                <DialogTitle className="text-[15px] font-semibold">
+                                  Share Invoice
                                 </DialogTitle>
-                                <p className="text-[13px] text-muted-foreground mt-1 truncate">
-                                  Invoice {invoice.invoiceNumber || "Draft"} -{" "}
-                                  {invoice.exportFileName}
+                                <p className="text-[12px] text-muted-foreground mt-1 truncate">
+                                  {invoice.invoiceNumber || "Draft"} - {invoice.exportFileName}
                                 </p>
                               </DialogHeader>
 
-                              <div className="px-5 py-4 bg-black/5 dark:bg-white/5 border-t border-b border-black/5 dark:border-white/5">
-                                <div className="grid grid-cols-4 gap-4">
+                              <div className="p-4 bg-muted/20 border-t border-border/50">
+                                <div className="grid grid-cols-4 gap-2">
                                   <button
-                                    onClick={() =>
-                                      handleShare(invoice, "whatsapp")
-                                    }
-                                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    onClick={() => handleShare(invoice, "whatsapp")}
+                                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-md hover:bg-muted/80 transition-none outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                   >
-                                    <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                                      <MessageCircle className="h-6 w-6 text-green-600 dark:text-green-500 fill-green-500/20" />
-                                    </div>
-                                    <span className="text-[11px] font-medium text-foreground">
-                                      WhatsApp
-                                    </span>
+                                    <MessageCircle className="h-6 w-6 text-foreground stroke-[1.5]" />
+                                    <span className="text-[11px] text-foreground">WhatsApp</span>
                                   </button>
 
                                   <button
-                                    onClick={() =>
-                                      handleShare(invoice, "mailto")
-                                    }
-                                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    onClick={() => handleShare(invoice, "mailto")}
+                                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-md hover:bg-muted/80 transition-none outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                   >
-                                    <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                                      <Mail className="h-6 w-6 text-blue-600 dark:text-blue-500 fill-blue-500/20" />
-                                    </div>
-                                    <span className="text-[11px] font-medium text-foreground">
-                                      Mail App
-                                    </span>
+                                    <Mail className="h-6 w-6 text-foreground stroke-[1.5]" />
+                                    <span className="text-[11px] text-foreground">Mail</span>
                                   </button>
 
                                   <button
-                                    onClick={() =>
-                                      handleShare(invoice, "gmail")
-                                    }
-                                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    onClick={() => handleShare(invoice, "gmail")}
+                                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-md hover:bg-muted/80 transition-none outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                   >
-                                    <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                                      <Mail className="h-6 w-6 text-red-600 dark:text-red-500 fill-red-500/20" />
-                                    </div>
-                                    <span className="text-[11px] font-medium text-foreground">
-                                      Gmail
-                                    </span>
+                                    <Mail className="h-6 w-6 text-foreground stroke-[1.5]" />
+                                    <span className="text-[11px] text-foreground">Gmail</span>
                                   </button>
 
                                   <button
-                                    onClick={() =>
-                                      handleShare(invoice, "folder")
-                                    }
-                                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    onClick={() => handleShare(invoice, "folder")}
+                                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-md hover:bg-muted/80 transition-none outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                   >
-                                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                                      <FolderOpen className="h-6 w-6 text-amber-600 dark:text-amber-500 fill-amber-500/20" />
-                                    </div>
-                                    <span className="text-[11px] font-medium text-foreground">
-                                      Open Folder
-                                    </span>
+                                    <FolderOpen className="h-6 w-6 text-foreground stroke-[1.5]" />
+                                    <span className="text-[11px] text-foreground">Folder</span>
                                   </button>
                                 </div>
                               </div>
@@ -344,7 +315,7 @@ export function HistoryPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(invoice)}
-                            className="h-8 px-3 text-[12px] rounded-md hover:bg-black/5 dark:hover:bg-white/10"
+                            className="h-8 px-2.5 text-[12px] rounded-md hover:bg-muted font-normal"
                           >
                             Edit
                           </Button>
@@ -352,9 +323,9 @@ export function HistoryPage() {
                             variant="secondary"
                             size="sm"
                             onClick={() => handleOpen(invoice)}
-                            className="h-8 px-3 text-[12px] rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                            className="h-8 px-3 text-[12px] rounded-md shadow-sm font-medium"
                           >
-                            <ExternalLink className="h-3 w-3 mr-1.5" /> Open
+                            <ExternalLink className="h-3.5 w-3.5 mr-1.5 stroke-[1.5]" /> Open
                           </Button>
                         </div>
                       </TableCell>
