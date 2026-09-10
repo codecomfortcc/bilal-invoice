@@ -11,9 +11,13 @@ import { PersonalDetailsCard } from "./components/PersonalDetailsCard";
 import { GlobalStylesCard } from "./components/GlobalStylesCard";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useUiStore } from "@/stores";
 import { UpdaterCard } from "./components/UpdaterCard";
+import { invoke } from "@tauri-apps/api/core";
+import { useDebugLogStore, type LogLevel } from "@/stores/debug.store";
+import { Terminal, Trash2, ExternalLink, Bug } from "lucide-react";
 
 export function Settings() {
   const { setCompany: setGlobalCompany } = useCompanyStore();
@@ -21,6 +25,8 @@ export function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const methods = useSettingsForm();
   const skipNextResetRef = (methods as any).__skipNextReset as React.MutableRefObject<boolean>;
+  const logs = useDebugLogStore((s) => s.logs);
+  const clearLogs = useDebugLogStore((s) => s.clearLogs);
 
   const doSave = useCallback(async (data: SettingsFormValues) => {
     setIsSaving(true);
@@ -81,6 +87,28 @@ export function Settings() {
     };
   }, [methods, doSave]);
 
+  const openDevTools = async () => {
+    try {
+      await invoke("open_devtools");
+    } catch (e) {
+      console.error("Failed to open DevTools:", e);
+    }
+  };
+
+  const levelColors: Record<LogLevel, string> = {
+    info: "text-blue-400",
+    warn: "text-yellow-400",
+    error: "text-red-400",
+    success: "text-emerald-400",
+  };
+
+  const levelBg: Record<LogLevel, string> = {
+    info: "bg-blue-400/10",
+    warn: "bg-yellow-400/10",
+    error: "bg-red-400/10",
+    success: "bg-emerald-400/10",
+  };
+
   return (
     <div className="h-full overflow-auto">
       <div className="max-w-3xl mx-auto py-8 px-6 space-y-6">
@@ -111,7 +139,7 @@ export function Settings() {
             <CardTitle>Advanced Tools</CardTitle>
             <CardDescription>Extra configurations and tools for advanced users.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
               <div className="space-y-0.5">
                 <Label htmlFor="developer-mode" className="text-[13px] font-medium text-foreground cursor-pointer">
@@ -127,6 +155,78 @@ export function Settings() {
                 onCheckedChange={setDeveloperMode}
               />
             </div>
+
+            {developerMode && (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                {/* Developer Tools Bar */}
+                <div className="flex items-center gap-2 p-3 border border-border rounded-md bg-muted/20">
+                  <Bug className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-[13px] font-medium text-foreground flex-1">Developer Tools</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1.5"
+                    onClick={openDevTools}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Open DevTools
+                  </Button>
+                </div>
+
+                {/* Debug Log Panel */}
+                <div className="border border-border rounded-md overflow-hidden">
+                  <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b border-border">
+                    <div className="flex items-center gap-1.5">
+                      <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Debug Log</span>
+                      {logs.length > 0 && (
+                        <span className="text-[10px] text-muted-foreground/60 bg-muted px-1.5 py-0.5 rounded-full ml-1">{logs.length}</span>
+                      )}
+                    </div>
+                    {logs.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={clearLogs}
+                        className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-48 overflow-y-auto bg-background/50">
+                    {logs.length === 0 ? (
+                      <div className="flex items-center justify-center py-6 text-[12px] text-muted-foreground/50">
+                        No debug logs yet. Try checking for updates.
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-border/30">
+                        {logs.map((log) => (
+                          <div
+                            key={log.id}
+                            className={`px-3 py-2 text-[12px] flex items-start gap-2 ${levelBg[log.level]}`}
+                          >
+                            <span className="text-[10px] text-muted-foreground/60 font-mono shrink-0 mt-0.5 min-w-[55px]">
+                              {log.timestamp.toLocaleTimeString()}
+                            </span>
+                            <span className={`font-mono font-semibold uppercase text-[10px] shrink-0 mt-0.5 min-w-[42px] ${levelColors[log.level]}`}>
+                              {log.level}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-foreground/90">{log.message}</span>
+                              {log.detail && (
+                                <p className="text-[11px] text-muted-foreground/70 mt-0.5 font-mono break-all">{log.detail}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

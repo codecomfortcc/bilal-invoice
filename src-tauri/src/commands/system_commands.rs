@@ -3,7 +3,16 @@ use crate::infrastructure::pdf_service::{self, PdfResult};
 use crate::infrastructure::font_service::{self, FontInfo};
 use crate::state::AppState;
 use crate::errors::Result;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
+
+#[tauri::command]
+pub fn open_devtools(app: AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        if !window.is_devtools_open() {
+            window.open_devtools();
+        }
+    }
+}
 
 #[tauri::command]
 pub fn get_preference(

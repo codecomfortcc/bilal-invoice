@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { RefreshCw, Download } from "lucide-react";
+import { useUiStore } from "@/stores";
+import { useDebugLogStore } from "@/stores/debug.store";
 
 interface UpdateInfo {
   version: string;
@@ -23,6 +25,8 @@ export function UpdaterCard() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [progress, setProgress] = useState(0);
   const [currentVersion, setCurrentVersion] = useState<string>("");
+  const developerMode = useUiStore((s) => s.developerMode);
+  const addLog = useDebugLogStore((s) => s.addLog);
 
   useEffect(() => {
     getVersion().then(setCurrentVersion).catch(console.error);
@@ -50,19 +54,31 @@ export function UpdaterCard() {
   const checkForUpdates = async () => {
     setIsChecking(true);
     setUpdateInfo(null);
+    addLog("info", "Checking for updates...");
     try {
       const update = await invoke<UpdateInfo | null>("check_for_updates");
       if (update) {
         setUpdateInfo(update);
+        addLog("success", `Update available: v${update.version}`, update.body || undefined);
+        if (developerMode) {
+          toast.success(`Update found: v${update.version}`);
+        }
       } else {
         toast.success("Application is up to date");
+        addLog("info", "Application is up to date");
       }
     } catch (e: any) {
+      const errMsg = typeof e === "string" ? e : e?.message || JSON.stringify(e);
       if (typeof e === "string" && e.includes("Could not fetch a valid release JSON")) {
         toast.success("Application is up to date");
+        addLog("info", "No release JSON found — app is up to date");
       } else {
-        toast.error("Failed to check for updates");
-        console.error(e);
+        if (developerMode) {
+          toast.error(`Update check failed: ${errMsg}`);
+        } else {
+          toast.error("Failed to check for updates");
+        }
+        addLog("error", "Failed to check for updates", errMsg);
       }
     } finally {
       setIsChecking(false);
@@ -72,12 +88,19 @@ export function UpdaterCard() {
   const installUpdate = async () => {
     setIsDownloading(true);
     setProgress(0);
+    addLog("info", "Starting update download & install...");
     try {
       await invoke("install_update");
+      addLog("success", "Update installed — restarting app");
       // The app will restart automatically on success
-    } catch (e) {
-      toast.error("Failed to install update");
-      console.error(e);
+    } catch (e: any) {
+      const errMsg = typeof e === "string" ? e : e?.message || JSON.stringify(e);
+      if (developerMode) {
+        toast.error(`Install failed: ${errMsg}`, { duration: 8000 });
+      } else {
+        toast.error("Failed to install update");
+      }
+      addLog("error", "Failed to install update", errMsg);
       setIsDownloading(false);
     }
   };
