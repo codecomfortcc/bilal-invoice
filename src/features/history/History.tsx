@@ -127,7 +127,7 @@ export function HistoryPage() {
     if (platform === "whatsapp") {
       url = `https://wa.me/?text=${body}`;
     } else if (platform === "mailto") {
-      // Adding attach parameter works on some desktop clients like Outlook
+
       url = `mailto:?subject=${subject}&body=${body}&attach=${encodeURIComponent(filePath)}`;
     } else if (platform === "gmail") {
       url = `https://mail.google.com/mail/?view=cm&fs=1&to=&su=${subject}&body=${body}`;
