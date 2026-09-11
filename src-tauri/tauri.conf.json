@@ -40,7 +40,7 @@
       "endpoints": [
         "https://github.com/codecomfortcc/bilal-invoice/releases/latest/download/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVGRjQzMkVCNUM4NTZFOTUKUldTVmJvVmM2ekwwNzR3WUVWbjNrOG4rQUxYeE5KS1F2Sk9xMkdwWUkwYWthUFg3RGdPdWc5Z2MK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNCQjY1QTQzQkJDMUIyN0IKUldSN3NzRzdRMXEyTzU0NjgxTklQL1UvTzNEcFViczZ6MktIOUNmMUN6SzBCdnFzaUFGQko2NysK",
       "windows": {
         "installMode": "passive"
       }
