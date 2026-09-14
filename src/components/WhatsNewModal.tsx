@@ -80,10 +80,10 @@ export function WhatsNewModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <DialogContent className="sm:max-w-[400px] max-h-[80vh] p-5 gap-4 rounded-2xl border border-border/80 shadow-xl bg-popover overflow-hidden">
+      <DialogContent className="sm:max-w-[420px] max-h-[85vh] flex flex-col p-5 gap-4 rounded-2xl border border-border/80 shadow-xl bg-popover overflow-hidden">
         
         {/* Compact Header */}
-        <DialogHeader className="text-left gap-1">
+        <DialogHeader className="text-left gap-1 shrink-0">
           <div className="flex items-center gap-1.5 text-primary text-xs font-semibold">
             <Sparkles className="h-3.5 w-3.5" />
             <span>v{currentVersion} Update</span>
@@ -97,7 +97,7 @@ export function WhatsNewModal() {
         </DialogHeader>
 
         {/* Feature Highlights Grid */}
-        <div className="grid grid-cols-2 gap-3 select-none">
+        <div className="grid grid-cols-2 gap-3 select-none shrink-0">
           
           {/* Highlight 1: Auto Date Toggle */}
           <div className="flex flex-col gap-2 p-3 rounded-xl bg-muted/30 border border-border/40 overflow-hidden group">
@@ -107,9 +107,9 @@ export function WhatsNewModal() {
             </div>
             
             {/* Image Container with Zoom Animation */}
-            <div className="relative w-full h-24 rounded-lg bg-background/50 border border-border/60 overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-20 rounded-lg bg-background/50 border border-border/60 overflow-hidden flex items-center justify-center">
               <motion.img 
-                src="/auto-date-toggle.png" 
+                src="/auto-date-update.png" 
                 alt="Auto Date Toggle Feature" 
                 className="w-full h-full object-cover"
                 whileHover={{ scale: 1.15 }}
@@ -135,9 +135,9 @@ export function WhatsNewModal() {
             </div>
             
             {/* Image Container with Zoom Animation */}
-            <div className="relative w-full h-24 rounded-lg bg-background/50 border border-border/60 overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-20 rounded-lg bg-background/50 border border-border/60 overflow-hidden flex items-center justify-center">
               <motion.img 
-                src="/text-signature-setting.png" 
+                src="/digital-text-signature.png" 
                 alt="Text Signature Feature" 
                 className="w-full h-full object-cover"
                 whileHover={{ scale: 1.15 }}
@@ -158,12 +158,12 @@ export function WhatsNewModal() {
         </div>
 
         {/* Release Notes View */}
-        <div className="max-h-[160px] overflow-y-auto pr-1">
+        <div className="flex-1 min-h-[80px] overflow-y-auto pr-1">
           <ReleaseNotesView notes={notes} />
         </div>
 
         {/* Action Button */}
-        <DialogFooter className="pt-2 sm:justify-stretch">
+        <DialogFooter className="pt-2 sm:justify-stretch shrink-0">
           <Button 
             onClick={handleClose}
             className="w-full h-9 text-xs font-medium rounded-lg"

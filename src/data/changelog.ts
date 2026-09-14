@@ -5,7 +5,7 @@ export interface ChangelogVersion {
 }
 
 export const CHANGELOG: Record<string, ChangelogVersion> = {
-  "3.0.15": {
+  "3.0.16": {
     features: [
       "Signature Selection: Toggle between uploading an Image or typing a Text signature.",
       "Customizable Invoice Dates: Support full font styling.",
