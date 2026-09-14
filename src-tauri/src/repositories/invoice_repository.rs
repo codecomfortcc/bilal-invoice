@@ -17,7 +17,7 @@ pub fn save_invoice(conn: &Connection, invoice: &Invoice) -> Result<()> {
             status, exportFileName, exportFolder, exportDate, created_at, updated_at,
             seller_name, seller_address_line_1, seller_address_line_2, seller_city, seller_pincode, seller_state, seller_state_code, seller_gst, seller_email, seller_phone, seller_logo,
             bank_name, bank_account_number, bank_ifsc_code, bank_account_name,
-            signature_image, digital_signature_name
+            signature_image, digital_signature_name, authorized_signature_name, signature_date
         ) VALUES (
             ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8,
             ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17,
@@ -28,7 +28,7 @@ pub fn save_invoice(conn: &Connection, invoice: &Invoice) -> Result<()> {
             ?38, ?39, ?40, ?41, ?42, ?43,
             ?44, ?45, ?46, ?47, ?48, ?49, ?50, ?51, ?52, ?53, ?54,
             ?55, ?56, ?57, ?58,
-            ?59, ?60
+            ?59, ?60, ?61, ?62
         )
         ON CONFLICT(id) DO UPDATE SET
             invoiceNumber=excluded.invoiceNumber, date=excluded.date, customerId=excluded.customerId,
@@ -43,7 +43,7 @@ pub fn save_invoice(conn: &Connection, invoice: &Invoice) -> Result<()> {
             exportDate=excluded.exportDate, updated_at=excluded.updated_at,
             seller_name=excluded.seller_name, seller_address_line_1=excluded.seller_address_line_1, seller_address_line_2=excluded.seller_address_line_2, seller_city=excluded.seller_city, seller_pincode=excluded.seller_pincode, seller_state=excluded.seller_state, seller_state_code=excluded.seller_state_code, seller_gst=excluded.seller_gst, seller_email=excluded.seller_email, seller_phone=excluded.seller_phone, seller_logo=excluded.seller_logo,
             bank_name=excluded.bank_name, bank_account_number=excluded.bank_account_number, bank_ifsc_code=excluded.bank_ifsc_code, bank_account_name=excluded.bank_account_name,
-            signature_image=excluded.signature_image, digital_signature_name=excluded.digital_signature_name",
+            signature_image=excluded.signature_image, digital_signature_name=excluded.digital_signature_name, authorized_signature_name=excluded.authorized_signature_name, signature_date=excluded.signature_date",
         params![
             invoice.id, invoice.invoice_number, invoice.date, invoice.customer_id, items_json, invoice.remarks, invoice.total, invoice.amount_in_words,
             invoice.consignee_name, invoice.consignee_address_line_1, invoice.consignee_address_line_2, invoice.consignee_city, invoice.consignee_pincode, invoice.consignee_address, invoice.consignee_gst, invoice.consignee_state, invoice.consignee_state_code,
@@ -54,7 +54,7 @@ pub fn save_invoice(conn: &Connection, invoice: &Invoice) -> Result<()> {
             invoice.status.clone().unwrap_or_else(|| "draft".to_string()), invoice.export_file_name, invoice.export_folder, invoice.export_date, now, now,
             invoice.seller_name, invoice.seller_address_line_1, invoice.seller_address_line_2, invoice.seller_city, invoice.seller_pincode, invoice.seller_state, invoice.seller_state_code, invoice.seller_gst, invoice.seller_email, invoice.seller_phone, invoice.seller_logo,
             invoice.bank_name, invoice.bank_account_number, invoice.bank_ifsc_code, invoice.bank_account_name,
-            invoice.signature_image, invoice.digital_signature_name
+            invoice.signature_image, invoice.digital_signature_name, invoice.authorized_signature_name, invoice.signature_date
         ],
     )?;
 
@@ -127,6 +127,8 @@ fn row_to_invoice(row: &rusqlite::Row) -> rusqlite::Result<Invoice> {
 
         signature_image: row.get("signature_image").unwrap_or(None),
         digital_signature_name: row.get("digital_signature_name").unwrap_or(None),
+        authorized_signature_name: row.get("authorized_signature_name").unwrap_or(None),
+        signature_date: row.get("signature_date").unwrap_or(None),
     })
 }
 

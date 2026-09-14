@@ -8,6 +8,7 @@ import { calculateTotal } from "@/lib/invoiceRules";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { Switch } from "@/components/ui/switch";
 import { saveCompanySettings } from "@/services/settings.service";
 import { saveInventoryItem } from "@/services/inventory.service";
 
@@ -620,6 +621,8 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany, onUpd
                           value={data.date || ""}
                           onChange={(v) => updateField("date", v)}
                           className="font-bold"
+                          showAutoDateToggle={true}
+                          autoDateConfigKey="useCurrentDateForInvoice"
                         />
                       </strong>
                     </div>
@@ -990,9 +993,13 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany, onUpd
                           
                           {showDigitalSignature && (
                             <div className={cn("flex flex-col z-10", (!showSignatureImage) ? "items-center text-center mx-auto" : "items-start text-left flex-1")}>
-                              <span className="text-[8px] uppercase text-black/60 font-semibold tracking-wider">
-                                Digitally Signed By
-                              </span>
+                              <EditableText
+                                isEditing={isEditing}
+                                value={labels['digitallySignedByLabel'] || "Digitally Signed By"}
+                                onChange={(v) => updateLabel('digitallySignedByLabel', v)}
+                                className="text-[8px] uppercase text-black/60 font-semibold tracking-wider inline-block !w-auto"
+                                styleKey="digitallySignedByLabel"
+                              />
                               <strong className="text-[14px] mt-0.5 break-words text-black/90 leading-tight">
                                 <EditableText
                                   isEditing={isEditing}
@@ -1000,11 +1007,28 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany, onUpd
                                   onChange={(val) => updateCompanyField("digitalSignatureName", val)}
                                   placeholder="Signatory Name"
                                   className={cn("font-bold text-[14px] !w-auto whitespace-nowrap", !showSignatureImage && "text-center")}
+                                  styleKey="digitalSignatureName"
                                 />
                               </strong>
-                              <span className="text-[9px] mt-0.5 text-black/80">
-                                Date: {new Date().toLocaleDateString("en-GB").replace(/\//g, "-")}
-                              </span>
+                              <div className="text-[9px] mt-0.5 text-black/80 flex items-center relative group/date">
+                                <EditableText
+                                  isEditing={isEditing}
+                                  value={labels['signatureDateLabel'] || "Date:"}
+                                  onChange={(v) => updateLabel('signatureDateLabel', v)}
+                                  className="inline-block !w-auto mr-1"
+                                  styleKey="signatureDateLabel"
+                                />
+                                <EditableDate
+                                  lockableKey="signatureDate"
+                                  isEditing={isEditing}
+                                  value={data.signatureDate || ""}
+                                  onChange={(v) => updateField("signatureDate", v)}
+                                  className="text-[9px]"
+                                  styleKey="signatureDateValue"
+                                  showAutoDateToggle={true}
+                                  autoDateConfigKey="useCurrentDateForSignature"
+                                />
+                              </div>
                               {!showSignatureImage && (
                                 <span className="text-[10px] font-semibold text-black/90 whitespace-nowrap pt-4 mt-auto">
                                   Authorized Signatory
@@ -1015,37 +1039,50 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany, onUpd
                           
                           {showSignatureImage && (
                             <div className={cn("flex flex-col items-center justify-end w-[160px] z-10 relative group/section", (!showDigitalSignature) ? "mx-auto" : "ml-auto")}>
-                              <div className="relative w-full h-16 pointer-events-none flex items-end justify-center">
-                                <Rnd
-                                  disableDragging={!isEditing}
-                                  enableResizing={isEditing}
-                                  position={{ x: company?.signatureOffsetX || 0, y: company?.signatureOffsetY || 0 }}
-                                  size={{ width: 160 * (company?.signatureScale || 1) * 1.35, height: 'auto' }}
-                                  onDragStop={(e, d) => {
-                                    updateCompanyFields({
-                                      signatureOffsetX: d.x,
-                                      signatureOffsetY: d.y,
-                                    });
-                                  }}
-                                  onResizeStop={(e, direction, ref, delta, position) => {
-                                    const newScale = ref.offsetWidth / (160 * 1.35);
-                                    updateCompanyFields({
-                                      signatureScale: newScale,
-                                      signatureOffsetX: position.x,
-                                      signatureOffsetY: position.y,
-                                    });
-                                  }}
-                                  className={cn("absolute z-20", isEditing && "hover:ring-1 ring-blue-500/50 rounded pointer-events-auto")}
-                                >
-                                  <EditableImage
+                              {company?.useTextForAuthorizedSignature ? (
+                                <div className="flex items-end justify-center h-16 w-full pb-1">
+                                  <EditableText
                                     isEditing={isEditing}
-                                    value={company?.signature || ""}
-                                    onChange={(v) => updateCompanyField("signature", v)}
-                                    placeholder="Upload Signature"
-                                    className="w-full h-full object-contain pointer-events-auto"
+                                    value={company?.authorizedSignatureName || ""}
+                                    onChange={(val) => updateCompanyField("authorizedSignatureName", val)}
+                                    placeholder="Signatory Name"
+                                    className="font-bold text-[14px] !w-auto text-center"
+                                    styleKey="authorizedSignatureName"
                                   />
-                                </Rnd>
-                              </div>
+                                </div>
+                              ) : (
+                                <div className="relative w-full h-16 pointer-events-none flex items-end justify-center">
+                                  <Rnd
+                                    disableDragging={!isEditing}
+                                    enableResizing={isEditing}
+                                    position={{ x: company?.signatureOffsetX || 0, y: company?.signatureOffsetY || 0 }}
+                                    size={{ width: 160 * (company?.signatureScale || 1) * 1.35, height: 'auto' }}
+                                    onDragStop={(e, d) => {
+                                      updateCompanyFields({
+                                        signatureOffsetX: d.x,
+                                        signatureOffsetY: d.y,
+                                      });
+                                    }}
+                                    onResizeStop={(e, direction, ref, delta, position) => {
+                                      const newScale = ref.offsetWidth / (160 * 1.35);
+                                      updateCompanyFields({
+                                        signatureScale: newScale,
+                                        signatureOffsetX: position.x,
+                                        signatureOffsetY: position.y,
+                                      });
+                                    }}
+                                    className={cn("absolute z-20", isEditing && "hover:ring-1 ring-blue-500/50 rounded pointer-events-auto")}
+                                  >
+                                    <EditableImage
+                                      isEditing={isEditing}
+                                      value={company?.signature || ""}
+                                      onChange={(v) => updateCompanyField("signature", v)}
+                                      placeholder="Upload Signature"
+                                      className="w-full h-full object-contain pointer-events-auto"
+                                    />
+                                  </Rnd>
+                                </div>
+                              )}
                               <span className="text-[10px] font-semibold text-black/90 whitespace-nowrap pt-4 mt-auto">
                                 Authorized Signatory
                               </span>

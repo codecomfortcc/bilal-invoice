@@ -59,6 +59,9 @@ pub struct Company {
     pub show_bank_details: Option<bool>,
     pub show_digital_signature: Option<bool>,
     pub show_signature_image: Option<bool>,
+    pub use_text_for_authorized_signature: Option<bool>,
+    pub authorized_signature_name: Option<String>,
+    pub use_current_date_for_signature: Option<bool>,
     pub auto_save_products: Option<bool>,
     pub bill_size: Option<String>,
     pub date_format: Option<String>,
@@ -164,6 +167,8 @@ pub struct Invoice {
     // Signature
     pub signature_image: Option<String>,
     pub digital_signature_name: Option<String>,
+    pub authorized_signature_name: Option<String>,
+    pub signature_date: Option<String>,
 }
 
 impl InvoiceItem {

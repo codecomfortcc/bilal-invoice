@@ -30,6 +30,10 @@ export interface Company {
   showBankDetails?: boolean;
   showDigitalSignature?: boolean;
   showSignatureImage?: boolean;
+  useTextForAuthorizedSignature?: boolean;
+  authorizedSignatureName?: string;
+  useCurrentDateForSignature?: boolean;
+  useCurrentDateForInvoice?: boolean;
   autoSaveProducts?: boolean;
   billSize?: string;
   lockedFields?: string; // JSON string of Record<string, { id: string, isLocked: boolean, information: any, label: string }>
@@ -158,4 +162,6 @@ export interface InvoiceData {
   // Signature
   signatureImage?: string;
   digitalSignatureName?: string;
+  authorizedSignatureName?: string;
+  signatureDate?: string;
 }

@@ -35,7 +35,7 @@ pub async fn install_update(app: AppHandle) -> Result<(), String> {
     let updater = app.updater().map_err(|e| e.to_string())?;
     
     match updater.check().await {
-        Ok(Some(mut update)) => {
+        Ok(Some(update)) => {
             let app_clone = app.clone();
             
             // Download and install the update
@@ -53,7 +53,6 @@ pub async fn install_update(app: AppHandle) -> Result<(), String> {
 
             // Restart after successful installation
             app.restart();
-            Ok(())
         }
         Ok(None) => Err("No update available to install.".to_string()),
         Err(e) => Err(format!("Failed to check for updates: {}", e)),

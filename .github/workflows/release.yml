@@ -38,6 +38,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: "tauri-windows"
 
       - name: install dependencies
         run: pnpm install
@@ -52,11 +53,12 @@ jobs:
           releaseName: 'Bilal Invoice ${{ github.ref_name }}'
           releaseBody: |
             ### Features
-            - **Dynamic Release Notes:** The app now fetches live updates directly from GitHub! You will see real-time release notes before downloading.
-            - **Automated What's New:** The post-update popup now dynamically pulls your release notes, eliminating the need to update internal changelogs.
+            - **Signature Selection:** You can now toggle between uploading an Image or typing a Text signature in the settings.
+            - **Customizable Invoice Dates:** Double-click the Date or Signature headings to customize their font family, size, and color permanently.
+            - **Auto Date Toggle:** Added a smart "Auto Date" toggle inside the date popover menu to automatically inject today's date into your invoices and signatures.
             
             ### Improvements
-            - Redesigned the History page to follow the sleek Windows 11 Fluent Design system (Acrylic blurs, flat interactions, monoline icons).
+            - Redesigned the History page to follow the sleek Windows 11 Fluent Design system.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

@@ -64,6 +64,9 @@ pub fn get_company_settings(conn: &Connection, id: &str) -> Result<Option<Compan
             show_bank_details: row.get("showBankDetails").unwrap_or(None),
             show_digital_signature: row.get("showDigitalSignature").unwrap_or(None),
             show_signature_image: row.get("showSignatureImage").unwrap_or(None),
+            use_text_for_authorized_signature: row.get("useTextForAuthorizedSignature").unwrap_or(None),
+            authorized_signature_name: row.get("authorizedSignatureName").unwrap_or(None),
+            use_current_date_for_signature: row.get("useCurrentDateForSignature").unwrap_or(None),
             auto_save_products: row.get("autoSaveProducts").unwrap_or(None),
             bill_size: row.get("billSize").unwrap_or(None),
             date_format: row.get("dateFormat").unwrap_or(None),
@@ -82,8 +85,8 @@ pub fn save_company_settings(conn: &Connection, company: &Company) -> Result<()>
             signatureOffsetX, signatureOffsetY, signatureScale, termsOfDelivery, consigneeStateCode, modeOfPayment,
             buyerName, buyerAddressLine1, buyerAddressLine2, buyerCity, buyerPincode, buyerAddress, buyerGst, buyerState, buyerStateCode,
             deliveryNote, referenceNo, otherReferences, buyersOrderNo, dispatchDocNo, dispatchedThrough, destination, invoiceNumber, numberFormat, fieldStyles, master_font, master_font_variant, custom_labels, master_color,
-            lockedFields, columnWidths, showBankDetails, showDigitalSignature, showSignatureImage, autoSaveProducts, billSize, dateFormat
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42, ?43, ?44, ?45, ?46, ?47, ?48, ?49, ?50, ?51, ?52, ?53, ?54, ?55, ?56, ?57, ?58, ?59)
+            lockedFields, columnWidths, showBankDetails, showDigitalSignature, showSignatureImage, useTextForAuthorizedSignature, authorizedSignatureName, useCurrentDateForSignature, autoSaveProducts, billSize, dateFormat
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42, ?43, ?44, ?45, ?46, ?47, ?48, ?49, ?50, ?51, ?52, ?53, ?54, ?55, ?56, ?57, ?58, ?59, ?60, ?61, ?62)
         ON CONFLICT(id) DO UPDATE SET
             name=excluded.name, addressLine1=excluded.addressLine1, addressLine2=excluded.addressLine2, city=excluded.city, pincode=excluded.pincode, address=excluded.address, gst=excluded.gst, phone=excluded.phone,
             email=excluded.email, bankDetails=excluded.bankDetails, logo=excluded.logo, signature=excluded.signature,
@@ -94,7 +97,7 @@ pub fn save_company_settings(conn: &Connection, company: &Company) -> Result<()>
             consigneeStateCode=excluded.consigneeStateCode, modeOfPayment=excluded.modeOfPayment,
             buyerName=excluded.buyerName, buyerAddressLine1=excluded.buyerAddressLine1, buyerAddressLine2=excluded.buyerAddressLine2, buyerCity=excluded.buyerCity, buyerPincode=excluded.buyerPincode, buyerAddress=excluded.buyerAddress, buyerGst=excluded.buyerGst, buyerState=excluded.buyerState, buyerStateCode=excluded.buyerStateCode,
             deliveryNote=excluded.deliveryNote, referenceNo=excluded.referenceNo, otherReferences=excluded.otherReferences, buyersOrderNo=excluded.buyersOrderNo, dispatchDocNo=excluded.dispatchDocNo, dispatchedThrough=excluded.dispatchedThrough, destination=excluded.destination, invoiceNumber=excluded.invoiceNumber, numberFormat=excluded.numberFormat, fieldStyles=excluded.fieldStyles, master_font=excluded.master_font, master_font_variant=excluded.master_font_variant, custom_labels=excluded.custom_labels, master_color=excluded.master_color,
-            lockedFields=excluded.lockedFields, columnWidths=excluded.columnWidths, showBankDetails=excluded.showBankDetails, showDigitalSignature=excluded.showDigitalSignature, showSignatureImage=excluded.showSignatureImage, autoSaveProducts=excluded.autoSaveProducts, billSize=excluded.billSize, dateFormat=excluded.dateFormat",
+            lockedFields=excluded.lockedFields, columnWidths=excluded.columnWidths, showBankDetails=excluded.showBankDetails, showDigitalSignature=excluded.showDigitalSignature, showSignatureImage=excluded.showSignatureImage, useTextForAuthorizedSignature=excluded.useTextForAuthorizedSignature, authorizedSignatureName=excluded.authorizedSignatureName, useCurrentDateForSignature=excluded.useCurrentDateForSignature, autoSaveProducts=excluded.autoSaveProducts, billSize=excluded.billSize, dateFormat=excluded.dateFormat",
         params![
             company.id, company.name, company.address_line_1, company.address_line_2, company.city, company.pincode, company.address, company.gst, company.phone, company.email,
             company.bank_details, company.logo, company.signature,
@@ -104,7 +107,7 @@ pub fn save_company_settings(conn: &Connection, company: &Company) -> Result<()>
             company.consignee_state_code, company.mode_of_payment,
             company.buyer_name, company.buyer_address_line_1, company.buyer_address_line_2, company.buyer_city, company.buyer_pincode, company.buyer_address, company.buyer_gst, company.buyer_state, company.buyer_state_code,
             company.delivery_note, company.reference_no, company.other_references, company.buyers_order_no, company.dispatch_doc_no, company.dispatched_through, company.destination, company.invoice_number, company.number_format, company.field_styles, company.master_font, company.master_font_variant, company.custom_labels, company.master_color,
-            company.locked_fields, company.column_widths, company.show_bank_details, company.show_digital_signature, company.show_signature_image, company.auto_save_products, company.bill_size, company.date_format
+            company.locked_fields, company.column_widths, company.show_bank_details, company.show_digital_signature, company.show_signature_image, company.use_text_for_authorized_signature, company.authorized_signature_name, company.use_current_date_for_signature, company.auto_save_products, company.bill_size, company.date_format
         ],
     )?;
 

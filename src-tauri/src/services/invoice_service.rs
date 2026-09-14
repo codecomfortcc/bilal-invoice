@@ -345,6 +345,8 @@ pub fn initialize_invoice(conn: &Connection, template: Option<Invoice>) -> Resul
 
                 signature_image: None,
                 digital_signature_name: None,
+                authorized_signature_name: None,
+                signature_date: None,
             },
     };
 

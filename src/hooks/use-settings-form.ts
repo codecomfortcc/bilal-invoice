@@ -33,6 +33,9 @@ export const settingsFormSchema = z.object({
   signature: z.string().optional(),
   showDigitalSignature: z.boolean().optional(),
   showSignatureImage: z.boolean().optional(),
+  useTextForAuthorizedSignature: z.boolean().optional(),
+  authorizedSignatureName: z.string().optional(),
+  useCurrentDateForSignature: z.boolean().optional(),
   autoSaveProducts: z.boolean().optional(),
   billSize: z.string().optional(),
   
@@ -91,6 +94,9 @@ function buildFormValues(company: any): SettingsFormValues {
     signature: company?.signature || "",
     showDigitalSignature: company?.showDigitalSignature ?? true,
     showSignatureImage: company?.showSignatureImage ?? true,
+    useTextForAuthorizedSignature: company?.useTextForAuthorizedSignature ?? false,
+    authorizedSignatureName: company?.authorizedSignatureName || "",
+    useCurrentDateForSignature: company?.useCurrentDateForSignature ?? true,
     autoSaveProducts: company?.autoSaveProducts ?? true,
     billSize: company?.billSize || "A4",
     

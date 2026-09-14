@@ -155,6 +155,19 @@ export function PersonalDetailsCard() {
                 <Input placeholder="e.g. John Smith" {...form.register("digitalSignatureName")} />
                 <p className="text-[10px] text-muted-foreground mt-1">This name automatically appears inside every invoice signature section.</p>
               </Field>
+              <div className="flex items-center justify-between mt-4 p-3 border border-border rounded-md bg-muted/20">
+                <div className="space-y-0.5">
+                  <h4 className="text-[13px] font-medium text-foreground">Use Current Date</h4>
+                  <p className="text-[11px] text-muted-foreground">Automatically use today's date for the digital signature.</p>
+                </div>
+                <Controller
+                  control={form.control}
+                  name="useCurrentDateForSignature"
+                  render={({ field }) => (
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  )}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -163,8 +176,8 @@ export function PersonalDetailsCard() {
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
             <div className="space-y-0.5">
-              <h4 className="text-[13px] font-medium text-foreground">Show Signature Image</h4>
-              <p className="text-[11px] text-muted-foreground">Display your physical signature image on invoices.</p>
+              <h4 className="text-[13px] font-medium text-foreground">Show Authorized Signatory</h4>
+              <p className="text-[11px] text-muted-foreground">Display the Authorized Signatory section on invoices.</p>
             </div>
             <Controller
               control={form.control}
@@ -176,8 +189,28 @@ export function PersonalDetailsCard() {
           </div>
 
           {showSignatureImage && (
-            <div className="pl-2 border-l-2 border-primary/20 ml-2 animate-in fade-in slide-in-from-left-2 duration-300">
-              {signature ? (
+            <div className="pl-2 border-l-2 border-primary/20 ml-2 animate-in fade-in slide-in-from-left-2 duration-300 space-y-4">
+              <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+                <div className="space-y-0.5">
+                  <h4 className="text-[13px] font-medium text-foreground">Use Text Signature Instead</h4>
+                  <p className="text-[11px] text-muted-foreground">Type your signature instead of uploading an image.</p>
+                </div>
+                <Controller
+                  control={form.control}
+                  name="useTextForAuthorizedSignature"
+                  render={({ field }) => (
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  )}
+                />
+              </div>
+              
+              {form.watch("useTextForAuthorizedSignature") ? (
+                <Field>
+                  <FieldLabel className="text-[13px] font-medium text-foreground">Authorized Signatory Name</FieldLabel>
+                  <Input placeholder="e.g. John Doe" {...form.register("authorizedSignatureName")} />
+                  <p className="text-[10px] text-muted-foreground mt-1">This text will appear as the signature.</p>
+                </Field>
+              ) : signature ? (
                 <div className="space-y-3">
                   {/* Signature Preview Card */}
                   <div className="rounded-lg border border-border/50 overflow-hidden">

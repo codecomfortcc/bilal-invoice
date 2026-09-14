@@ -5,6 +5,15 @@ export interface ChangelogVersion {
 }
 
 export const CHANGELOG: Record<string, ChangelogVersion> = {
+  "3.0.15": {
+    features: [
+      "Signature Selection: Toggle between uploading an Image or typing a Text signature.",
+      "Customizable Invoice Dates: Support full font styling.",
+      "Auto Date Toggle: Automatically inject today's date."
+    ],
+    fixes: [],
+    improvements: ["Redesigned the History page to follow Windows 11 Fluent Design"]
+  },
   "3.0.10": {
     features: [
       "Dynamic 'What's New' release notes popup after updating",

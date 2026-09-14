@@ -72,6 +72,9 @@ pub fn init_db(app_handle: &AppHandle) -> Result<()> {
             showBankDetails INTEGER,
             showDigitalSignature INTEGER,
             showSignatureImage INTEGER,
+            useTextForAuthorizedSignature INTEGER,
+            authorizedSignatureName TEXT,
+            useCurrentDateForSignature INTEGER,
             autoSaveProducts INTEGER,
             billSize TEXT,
             dateFormat TEXT
@@ -137,7 +140,9 @@ pub fn init_db(app_handle: &AppHandle) -> Result<()> {
             consigneePincode TEXT,
             consigneeAddress TEXT,
             consigneeStateCode TEXT,
-            buyerStateCode TEXT
+            buyerStateCode TEXT,
+            authorized_signature_name TEXT,
+            signature_date TEXT
         )",
         [],
     )?;
@@ -195,6 +200,8 @@ pub fn init_db(app_handle: &AppHandle) -> Result<()> {
     
     let _ = conn.execute("ALTER TABLE invoices ADD COLUMN signature_image TEXT", []);
     let _ = conn.execute("ALTER TABLE invoices ADD COLUMN digital_signature_name TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN authorized_signature_name TEXT", []);
+    let _ = conn.execute("ALTER TABLE invoices ADD COLUMN signature_date TEXT", []);
     
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN consigneeStateCode TEXT", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN modeOfPayment TEXT", []);
@@ -226,6 +233,9 @@ pub fn init_db(app_handle: &AppHandle) -> Result<()> {
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN showBankDetails INTEGER", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN showDigitalSignature INTEGER", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN showSignatureImage INTEGER", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN useTextForAuthorizedSignature INTEGER", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN authorizedSignatureName TEXT", []);
+    let _ = conn.execute("ALTER TABLE companies ADD COLUMN useCurrentDateForSignature INTEGER", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN autoSaveProducts INTEGER", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN billSize TEXT", []);
     let _ = conn.execute("ALTER TABLE companies ADD COLUMN dateFormat TEXT", []);
