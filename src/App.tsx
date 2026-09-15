@@ -9,19 +9,14 @@ import {
 import {
   LayoutDashboard,
   History,
-  Settings as SettingsIcon,
   Package,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { GlobalUpdateChecker } from "@/components/GlobalUpdateChecker";
 import { WhatsNewModal } from "@/components/WhatsNewModal";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import {
-  Tooltip,
-  TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCompanySettings } from "@/services/settings.service";
@@ -30,20 +25,10 @@ import { InvoiceEditor } from "@/features/invoice-editor/InvoiceEditor";
 import { Settings } from "@/features/settings/Settings";
 import { HistoryPage } from "@/features/history/History";
 import { Inventory } from "@/features/inventory/Inventory";
+import { Shortcuts } from "@/features/shortcuts/Shortcuts";
 import { cn } from "@/lib/utils";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarInset,
-  useSidebar,
-} from "@/components/ui/sidebar";
 import { Titlebar } from "@/components/titlebar";
+import { EditorActions } from "@/components/EditorActions";
 
 const NAV_ITEMS = [
   { to: "/", icon: LayoutDashboard, label: "Editor" },
@@ -51,113 +36,44 @@ const NAV_ITEMS = [
   { to: "/history", icon: History, label: "History" },
 ] as const;
 
-function Logo() {
-  const { toggleSidebar, state } = useSidebar();
-  
-  return (
-    <button 
-      onClick={toggleSidebar}
-      className="flex items-center gap-2 overflow-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors p-1 outline-none ring-sidebar-ring focus-visible:ring-2"
-    >
-      <div className="flex items-center justify-center h-6 w-6 shrink-0 rounded-md">
-        <img src="/icon.png" alt="Logo" className="h-full w-full object-contain drop-shadow-sm" />
-      </div>
-      {state === "expanded" && (
-        <span className="font-semibold text-sm whitespace-nowrap mr-2">Invoice Editor</span>
-      )}
-    </button>
-  );
-}
-
-function AppSidebar() {
+function TopTabBar() {
   const location = useLocation();
-  const isSettingsActive = location.pathname === "/settings";
+
+  // Settings and Shortcuts pages hide the tabs to provide full focus
+  if (location.pathname === "/settings" || location.pathname === "/shortcuts") {
+    return null;
+  }
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="py-2 px-2">
-        <Logo />
-      </SidebarHeader>
-      
-      <SidebarContent>
-        <SidebarMenu className="px-2 space-y-1">
-          {NAV_ITEMS.map((item) => (
-            <SidebarMenuItem key={item.to}>
-              <SidebarMenuButton 
-                isActive={location.pathname === item.to}
-                tooltip={item.label}
-                render={<Link to={item.to} />}
-              >
-                <item.icon className="h-[18px] w-[18px]" />
-                <span>{item.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-
-      <SidebarFooter className="py-4">
-        <SidebarMenu className="space-y-1">
-          <SidebarMenuItem>
-            <ThemeToggle />
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              isActive={isSettingsActive}
-              tooltip="Settings"
-              render={<Link to="/settings" />}
+    <div className="flex items-center justify-between px-4 h-10 bg-sidebar border-b border-border gap-2 overflow-x-auto no-scrollbar shrink-0">
+      <div className="flex gap-2 h-full items-end">
+        {NAV_ITEMS.map((item) => {
+          const isActive = location.pathname === item.to;
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 border-b-2 transition-colors text-xs font-medium h-[33px]",
+                isActive 
+                  ? "border-primary text-primary bg-background rounded-t-md" 
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-t-md"
+              )}
             >
-              <SettingsIcon className="h-[18px] w-[18px]" />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
-  );
-}
-
-function MobileTopNav() {
-  const location = useLocation();
-  const { toggleSidebar } = useSidebar();
-  
-  return (
-    <div className="md:hidden flex items-center p-2 border-b border-border bg-background/95 backdrop-blur-xs sticky top-0 z-50 overflow-x-auto no-scrollbar shadow-sm">
-      <button 
-        onClick={toggleSidebar}
-        className="flex items-center justify-center h-8 w-8 shrink-0 rounded-md mr-3"
-      >
-        <img src="/icon.png" alt="Logo" className="h-full w-full object-contain drop-shadow-sm" />
-      </button>
+              <item.icon className="w-3.5 h-3.5" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
       
-      <div className="flex items-center gap-1">
-        {NAV_ITEMS.map((item) => (
-          <Link 
-            key={item.to} 
-            to={item.to}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0",
-              location.pathname === item.to 
-                ? "bg-primary/10 text-primary" 
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            <span>{item.label}</span>
-          </Link>
-        ))}
-        <Link
-          to="/settings"
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0 ml-1",
-            location.pathname === "/settings"
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-        >
-          <SettingsIcon className="h-4 w-4" />
-          <span>Settings</span>
-        </Link>
+      {/* Right side action container with fixed vertical alignment */}
+      <div className="flex items-center h-full">
+        {location.pathname === "/" ? (
+          <EditorActions />
+        ) : (
+          <div className="h-8 w-1" />
+        )}
       </div>
     </div>
   );
@@ -165,14 +81,12 @@ function MobileTopNav() {
 
 function LoadingShell() {
   return (
-    <div className="flex h-screen w-screen bg-background">
-      {/* Sidebar skeleton */}
-      <div className="flex h-full w-14 flex-col items-center border-r border-border py-4 gap-3">
-        <Skeleton className="h-9 w-9 rounded-md" />
-        <Skeleton className="h-9 w-9 rounded-md mt-4" />
-        <Skeleton className="h-9 w-9 rounded-md" />
+    <div className="flex flex-col h-full w-full bg-background">
+      <div className="flex px-4 pt-2 gap-2 border-b border-border bg-sidebar">
+        <Skeleton className="h-9 w-24 rounded-t-lg rounded-b-none" />
+        <Skeleton className="h-9 w-24 rounded-t-lg rounded-b-none" />
+        <Skeleton className="h-9 w-24 rounded-t-lg rounded-b-none" />
       </div>
-      {/* Content skeleton */}
       <div className="flex-1 p-8 space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-96" />
@@ -187,6 +101,11 @@ function LoadingShell() {
 
 import { getPreference } from "@/services/system.service";
 
+import { GlobalSearchModal } from "@/components/GlobalSearchModal";
+import { GlobalShortcutsHandler } from "@/components/GlobalShortcutsHandler";
+import { ImportModal } from "@/components/ImportModal";
+import { ExportModal } from "@/components/ExportModal";
+
 function App() {
   const [dbReady, setDbReady] = useState(false);
   const { setCompany } = useCompanyStore();
@@ -196,6 +115,9 @@ function App() {
   useEffect(() => {
     loadSystemFonts();
     loadPreferences();
+    import("@/stores").then(({ useShortcutStore }) => {
+      useShortcutStore.getState().loadShortcuts();
+    });
     Promise.all([
       getCompanySettings("default_company"),
       getPreference("default_invoice_template").catch(() => null)
@@ -229,24 +151,26 @@ function App() {
   if (!dbReady) return <LoadingShell />;
 
   return (
-    <BrowserRouter>
+    <>
+      <GlobalShortcutsHandler />
       <GlobalUpdateChecker />
       <WhatsNewModal />
-      <SidebarProvider defaultOpen={false}>
-        <AppSidebar />
-        <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-background">
-          <MobileTopNav />
-          <main className="flex-1 overflow-auto">
-            <Routes>
-              <Route path="/" element={<InvoiceEditor />} />
-              <Route path="/items" element={<Inventory />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
-          </main>
-        </SidebarInset>
-      </SidebarProvider>
-    </BrowserRouter>
+      <GlobalSearchModal />
+      <ImportModal />
+      <ExportModal />
+      <div className="flex flex-col flex-1 h-full w-full overflow-hidden bg-background">
+        <TopTabBar />
+        <main className="flex-1 overflow-auto relative">
+          <Routes>
+            <Route path="/" element={<InvoiceEditor />} />
+            <Route path="/items" element={<Inventory />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/shortcuts" element={<Shortcuts />} />
+          </Routes>
+        </main>
+      </div>
+    </>
   );
 }
 
@@ -254,13 +178,15 @@ export default function AppWithProviders() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="invoice-app-theme">
       <TooltipProvider>
-        <div className="flex flex-col h-screen w-screen overflow-hidden">
-          <Titlebar />
-          <div className="flex-1 flex overflow-hidden">
-            <App />
+        <BrowserRouter>
+          <div className="flex flex-col h-screen w-screen overflow-hidden">
+            <Titlebar />
+            <div className="flex-1 flex overflow-hidden">
+              <App />
+            </div>
           </div>
-        </div>
-        <Toaster richColors position="bottom-right" />
+          <Toaster richColors position="bottom-right" />
+        </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
   );

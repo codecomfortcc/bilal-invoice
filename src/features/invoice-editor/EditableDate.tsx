@@ -56,7 +56,9 @@ export const EditableDate = ({
 
   const getFormattedDisplay = () => {
     const isAutoDate = showAutoDateToggle && autoDateConfigKey && company?.[autoDateConfigKey] !== false;
-    if (!isAutoDate && (!date || !isValid(date))) return value || placeholder;
+    if (!isAutoDate && (!date || !isValid(date))) {
+      return value || (isEditing && placeholder ? <span className="opacity-40 italic font-normal">{placeholder}</span> : <span>&nbsp;</span>);
+    }
     
     const dateToFormat = isAutoDate ? new Date() : (date as Date);
     const formatStr = company?.dateFormat || "YYYY-MM-DD";

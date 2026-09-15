@@ -184,12 +184,15 @@ export function ContentEditable({
   };
 
   if (!isEditing) {
-    if (!value && value !== 0 && !placeholder) return <span className={cn("inline-block min-h-[1em]", className)}>&nbsp;</span>;
-    return renderDisplay ? (
-      <>{renderDisplay(styleObj)}</>
-    ) : (
+    if (renderDisplay) {
+      return <>{renderDisplay(styleObj)}</>;
+    }
+    if (!value && value !== 0) {
+      return <span className={cn("inline-block min-h-[1em]", className)}>&nbsp;</span>;
+    }
+    return (
       <span style={styleObj} className={cn("whitespace-pre-line break-words inline-block w-full", className)}>
-        {value || placeholder}
+        {value}
       </span>
     );
   }
@@ -251,7 +254,7 @@ export function ContentEditable({
               </div>
             )}
             <span ref={spanRef} style={styleObj} className="break-words break-all whitespace-normal block w-full">
-               {value || (placeholder ? <span className="opacity-40 italic font-normal">{placeholder}</span> : <span>&nbsp;</span>)}
+               {value || (isEditing && placeholder ? <span className="opacity-40 italic font-normal">{placeholder}</span> : <span>&nbsp;</span>)}
             </span>
           </button>
         )}>

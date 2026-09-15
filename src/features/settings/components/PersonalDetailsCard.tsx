@@ -46,7 +46,7 @@ export function PersonalDetailsCard() {
         
         {/* Invoice Preferences */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+          <div id="setting-paper-size" className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
             <div className="space-y-0.5">
               <h4 className="text-[13px] font-medium text-foreground">Invoice Paper Size</h4>
               <p className="text-[11px] text-muted-foreground">Select the paper format for your invoices.</p>
@@ -69,7 +69,7 @@ export function PersonalDetailsCard() {
               )}
             />
           </div>
-          <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+          <div id="setting-auto-save" className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
             <div className="space-y-0.5">
               <h4 className="text-[13px] font-medium text-foreground">Auto-Save Products to Inventory</h4>
               <p className="text-[11px] text-muted-foreground">Automatically save or update products when typing them in the invoice editor.</p>
@@ -83,7 +83,7 @@ export function PersonalDetailsCard() {
             />
           </div>
           
-          <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+          <div id="setting-number-format" className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
             <div className="space-y-0.5">
               <h4 className="text-[13px] font-medium text-foreground">Number Formatting Standard</h4>
               <p className="text-[11px] text-muted-foreground">Choose how numbers should be formatted.</p>
@@ -105,7 +105,7 @@ export function PersonalDetailsCard() {
             />
           </div>
           
-          <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+          <div id="setting-date-format" className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
             <div className="space-y-0.5">
               <h4 className="text-[13px] font-medium text-foreground">Date Format</h4>
               <p className="text-[11px] text-muted-foreground">Choose how dates are rendered on invoices.</p>
@@ -133,7 +133,7 @@ export function PersonalDetailsCard() {
         </div>
 
         {/* Digital Signature */}
-        <div className="space-y-4">
+        <div id="setting-digital-signature" className="space-y-4">
           <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
             <div className="space-y-0.5">
               <h4 className="text-[13px] font-medium text-foreground">Show Digital Signature</h4>
@@ -173,7 +173,7 @@ export function PersonalDetailsCard() {
         </div>
 
         {/* Signature Image */}
-        <div className="space-y-4">
+        <div id="setting-authorized-signatory" className="space-y-4">
           <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
             <div className="space-y-0.5">
               <h4 className="text-[13px] font-medium text-foreground">Show Authorized Signatory</h4>

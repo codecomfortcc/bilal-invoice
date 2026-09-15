@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCompanyStore, useHistoryStore, useUiStore } from "@/stores";
 import { saveCompanySettings } from "@/services/settings.service";
+import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -37,6 +38,7 @@ export function GlobalStylesCard() {
   const company = useCompanyStore((state) => state.company);
   const setCompany = useCompanyStore((state) => state.setCompany);
   const systemFonts = useUiStore((state) => state.systemFonts);
+  const { theme, setTheme } = useTheme();
 
   const [openFontDropdown, setOpenFontDropdown] = useState(false);
 
@@ -105,7 +107,28 @@ export function GlobalStylesCard() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+        <div id="setting-app-theme" className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+          <div className="space-y-0.5 pr-4">
+            <h4 className="text-[13px] font-medium text-foreground">
+              Application Theme
+            </h4>
+            <p className="text-[11px] text-muted-foreground">
+              Switch theme mode between Light, Dark, or System Default.
+            </p>
+          </div>
+          <Select value={theme} onValueChange={(v: any) => setTheme(v)}>
+            <SelectTrigger className="w-[180px] shrink-0">
+              <SelectValue placeholder="Theme" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">Light</SelectItem>
+              <SelectItem value="dark">Dark</SelectItem>
+              <SelectItem value="system">System Default</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div id="setting-master-font" className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
           <div className="space-y-0.5 pr-4">
             <h4 className="text-[13px] font-medium text-foreground">
               Master Font
@@ -181,7 +204,7 @@ export function GlobalStylesCard() {
           </Select>
         </div>
 
-        <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
+        <div id="setting-master-color" className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/20">
           <div className="space-y-0.5 pr-4">
             <h4 className="text-[13px] font-medium text-foreground">
               Master Color

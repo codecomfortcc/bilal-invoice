@@ -1,70 +1,35 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
 import { getVersion } from "@tauri-apps/api/app";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { RefreshCw, Download, Loader2 } from "lucide-react";
-import { useUiStore } from "@/stores";
+import { useUiStore, useUpdaterStore } from "@/stores";
 import { useDebugLogStore } from "@/stores/debug.store";
 import { parseReleaseNotes } from "@/lib/releaseNotesParser";
 import { ReleaseNotesView } from "@/components/ReleaseNotesView";
 
-interface UpdateInfo {
-  version: string;
-  body?: string;
-}
-
-interface ProgressPayload {
-  downloaded: number;
-  total?: number;
-}
-
 export function UpdaterCard() {
-  const [isChecking, setIsChecking] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isInstalling, setIsInstalling] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [currentVersion, setCurrentVersion] = useState<string>("");
+  const { 
+    status, setStatus, 
+    updateInfo, setUpdateInfo, 
+    progress, downloadSpeed, setProgress, setDownloadSpeed
+  } = useUpdaterStore();
+
   const developerMode = useUiStore((s) => s.developerMode);
   const addLog = useDebugLogStore((s) => s.addLog);
 
   useEffect(() => {
-    getVersion().then(setCurrentVersion).catch(console.error);
-
-    let downloadedBytes = 0;
-    const unlistenProgress = listen<ProgressPayload>("updater-progress", (event) => {
-      const { downloaded, total } = event.payload;
-      downloadedBytes += downloaded;
-      if (total) {
-        setProgress((downloadedBytes / total) * 100);
-        if (downloadedBytes >= total) {
-          setIsInstalling(true);
-        }
-      }
-    });
-
-    const unlistenStatus = listen<string>("updater-status", (event) => {
-      if (event.payload === "downloaded") {
-        setIsInstalling(true);
-        setProgress(100);
-      }
-    });
-
-    return () => {
-      unlistenProgress.then((f) => f());
-      unlistenStatus.then((f) => f());
-    };
+    // Current version is fetched natively, but let's just let it be handled locally if needed.
+    // Actually, getting current version is useful for the card header.
   }, []);
 
   const checkForUpdates = async () => {
-    setIsChecking(true);
-    setUpdateInfo(null);
-    addLog("info", "Checking for updates...");
+    setStatus('checking');
+    addLog("info", "[UpdaterCard] Checking for updates...");
     try {
-      const update = await invoke<UpdateInfo | null>("check_for_updates");
+      const update = await invoke<{version: string, body?: string} | null>("check_for_updates");
       if (update) {
         try {
           const res = await fetch(`https://api.github.com/repos/codecomfortcc/bilal-invoice/releases/tags/v${update.version}`);
@@ -78,11 +43,22 @@ export function UpdaterCard() {
           console.error("Failed to fetch live release notes", githubErr);
         }
         setUpdateInfo(update);
-        addLog("success", `Update available: v${update.version}`, update.body || undefined);
-        if (developerMode) {
-          toast.success(`Update found: v${update.version}`);
+        
+        // Check if it's already downloaded
+        const isDownloaded = await invoke<boolean>("check_downloaded_update", { version: update.version });
+        if (isDownloaded) {
+          setStatus('downloaded');
+          setProgress(100);
+          addLog("success", `Update v${update.version} already downloaded.`, update.body || undefined);
+        } else {
+          setStatus('available');
+          addLog("success", `Update available: v${update.version}`, update.body || undefined);
+          if (developerMode) {
+            toast.success(`Update found: v${update.version}`);
+          }
         }
       } else {
+        setStatus('idle');
         toast.success("Application is up to date");
         addLog("info", "Application is up to date");
       }
@@ -99,30 +75,40 @@ export function UpdaterCard() {
         }
         addLog("error", "Failed to check for updates", errMsg);
       }
-    } finally {
-      setIsChecking(false);
+      setStatus('idle');
+    }
+  };
+
+  const startDownload = async () => {
+    setStatus('downloading');
+    setProgress(0);
+    setDownloadSpeed('0 B/s');
+    addLog("info", "Starting update download in background...");
+    try {
+      await invoke("download_update");
+      // status changes to 'downloaded' automatically via GlobalUpdateChecker events
+    } catch (e: any) {
+      const errMsg = typeof e === "string" ? e : e?.message || JSON.stringify(e);
+      if (developerMode) {
+        toast.error(`Download failed: ${errMsg}`, { duration: 8000 });
+      } else {
+        toast.error("Failed to download update");
+      }
+      addLog("error", "Failed to download update", errMsg);
+      setStatus('available');
     }
   };
 
   const installUpdate = async () => {
-    setIsDownloading(true);
-    setIsInstalling(false);
-    setProgress(0);
-    addLog("info", "Starting update download & install...");
+    setStatus('installing');
+    addLog("info", "Restarting to apply update...");
     try {
       await invoke("install_update");
-      addLog("success", "Update installed — restarting app");
-      // The app will restart automatically on success
     } catch (e: any) {
       const errMsg = typeof e === "string" ? e : e?.message || JSON.stringify(e);
-      if (developerMode) {
-        toast.error(`Install failed: ${errMsg}`, { duration: 8000 });
-      } else {
-        toast.error("Failed to install update");
-      }
+      toast.error(`Install failed: ${errMsg}`);
       addLog("error", "Failed to install update", errMsg);
-      setIsDownloading(false);
-      setIsInstalling(false);
+      setStatus('downloaded');
     }
   };
 
@@ -139,11 +125,6 @@ export function UpdaterCard() {
             <CardTitle>Application Update</CardTitle>
             <CardDescription>Check for new versions and install updates automatically.</CardDescription>
           </div>
-          {currentVersion && (
-            <div className="text-sm font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-md">
-              v{currentVersion}
-            </div>
-          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -158,37 +139,51 @@ export function UpdaterCard() {
               ) : null}
             </div>
 
-            {isDownloading ? (
+            {status === 'downloading' && (
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  {isInstalling ? (
-                    <span className="flex items-center text-primary font-medium">
-                      <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
-                      Installing... Please wait (app will restart)
-                    </span>
-                  ) : (
-                    <span>Downloading update...</span>
-                  )}
-                  <span>{Math.round(progress)}%</span>
+                  <span>Downloading update...</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-primary/80">{downloadSpeed}</span>
+                    <span>{Math.round(progress)}%</span>
+                  </div>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-300 ${isInstalling ? 'bg-primary/60 animate-pulse' : 'bg-primary'}`}
+                    className="h-full bg-primary transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>
-            ) : (
-              <Button onClick={installUpdate} className="w-full sm:w-auto">
+            )}
+            
+            {status === 'downloaded' && (
+              <div className="flex items-center gap-3">
+                <Button onClick={installUpdate} className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white">
+                  Restart to Update
+                </Button>
+                <span className="text-xs text-muted-foreground">Download complete. Restart to apply.</span>
+              </div>
+            )}
+            
+            {status === 'installing' && (
+               <div className="flex items-center text-primary font-medium text-sm">
+                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                 Applying update and restarting...
+               </div>
+            )}
+
+            {status === 'available' && (
+              <Button onClick={startDownload} className="w-full sm:w-auto">
                 <Download className="mr-2 h-4 w-4" />
-                Download & Install
+                Download Update
               </Button>
             )}
           </div>
         ) : (
-          <Button onClick={checkForUpdates} disabled={isChecking} variant="outline" className="w-full sm:w-auto">
-            <RefreshCw className={`mr-2 h-4 w-4 ${isChecking ? "animate-spin" : ""}`} />
-            {isChecking ? "Checking..." : "Check for Updates"}
+          <Button onClick={checkForUpdates} disabled={status === 'checking'} variant="outline" className="w-full sm:w-auto">
+            <RefreshCw className={`mr-2 h-4 w-4 ${status === 'checking' ? "animate-spin" : ""}`} />
+            {status === 'checking' ? "Checking..." : "Check for Updates"}
           </Button>
         )}
       </CardContent>

@@ -15,7 +15,16 @@ export function InvoiceDetailsDialog() {
   const { invoiceData, updateInvoiceData } = useInvoiceStore();
   const company = useCompanyStore((state) => state.company);
 
-  useShortcut({ key: "y", ctrl: true }, () => setIsOpen(!isOpen));
+  useShortcut(
+    { key: "y", ctrl: true }, 
+    () => setIsOpen(!isOpen),
+    {
+      id: "shortcut-toggle-invoice-details",
+      title: "Toggle Invoice Details Dialog",
+      description: "Open or close the invoice details dialog",
+      category: "Invoice Actions",
+    }
+  );
 
   let lockedFields: Record<string, any> = {};
   if (company?.lockedFields) {

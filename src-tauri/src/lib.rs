@@ -23,6 +23,9 @@ pub fn run() {
             commands::settings_commands::save_company_settings,
             commands::system_commands::get_preference,
             commands::system_commands::set_preference,
+            commands::system_commands::get_shortcut_bindings,
+            commands::system_commands::save_shortcut_binding,
+            commands::system_commands::reset_shortcut_binding,
             commands::invoice_commands::initialize_invoice,
             commands::invoice_commands::save_invoice,
             commands::invoice_commands::get_invoice,
@@ -36,6 +39,8 @@ pub fn run() {
             commands::system_commands::save_pdf_export,
             commands::system_commands::get_system_fonts,
             commands::updater_commands::check_for_updates,
+            commands::updater_commands::check_downloaded_update,
+            commands::updater_commands::download_update,
             commands::updater_commands::install_update,
             commands::system_commands::open_devtools
         ])

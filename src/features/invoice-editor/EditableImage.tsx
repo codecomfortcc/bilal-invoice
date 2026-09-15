@@ -96,18 +96,19 @@ export const EditableImage = ({
         "cursor-pointer hover:ring-1 hover:ring-black/10 rounded-md transition-all border border-dashed border-transparent hover:border-black/20 overflow-hidden relative group/image",
         "flex items-center justify-center min-h-[40px] min-w-[80px]",
         !value && "bg-black/5 text-black/40 border-black/10 hover:bg-black/10",
+        !isEditing && !value && "hidden",
         className
       )}
       style={style}
     >
       {value ? (
         <img src={value} alt="Signature" className="max-w-full max-h-full object-contain pointer-events-none" />
-      ) : (
+      ) : isEditing ? (
         <div className="flex flex-col items-center justify-center p-2">
           <ImageIcon className="w-5 h-5 mb-1 opacity-50" />
           <span className="text-[10px] uppercase font-semibold opacity-50">{placeholder}</span>
         </div>
-      )}
+      ) : null}
       
       {isEditing && (
         <div className="absolute inset-0 bg-black/40 text-white opacity-0 group-hover/image:opacity-100 flex items-center justify-center transition-opacity">

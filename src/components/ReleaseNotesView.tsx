@@ -16,17 +16,17 @@ export function ReleaseNotesView({ notes, className = "" }: ReleaseNotesViewProp
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-4 text-xs ${className}`}>
       {hasFeatures && (
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-            <Sparkles className="h-4 w-4 text-emerald-500" />
-            New Features
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-2">
+          <h4 className="text-xs font-semibold flex items-center gap-1.5 text-emerald-400">
+            <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+            What's New in this Version
           </h4>
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {notes.features.map((feature, i) => (
-              <li key={i} className="text-sm text-muted-foreground pl-6 relative">
-                <span className="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-emerald-500/50" />
+              <li key={i} className="text-muted-foreground/90 pl-4 relative text-[11px] leading-relaxed">
+                <span className="absolute left-1 top-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
                 {feature}
               </li>
             ))}
@@ -35,15 +35,15 @@ export function ReleaseNotesView({ notes, className = "" }: ReleaseNotesViewProp
       )}
 
       {hasImprovements && (
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-            <Zap className="h-4 w-4 text-blue-500" />
-            Improvements
+        <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-3 space-y-2">
+          <h4 className="text-xs font-semibold flex items-center gap-1.5 text-sky-400">
+            <Zap className="h-3.5 w-3.5 text-sky-400" />
+            Key Improvements
           </h4>
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {notes.improvements.map((improvement, i) => (
-              <li key={i} className="text-sm text-muted-foreground pl-6 relative">
-                <span className="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-blue-500/50" />
+              <li key={i} className="text-muted-foreground/90 pl-4 relative text-[11px] leading-relaxed">
+                <span className="absolute left-1 top-1.5 h-1.5 w-1.5 rounded-full bg-sky-400/80" />
                 {improvement}
               </li>
             ))}
@@ -52,15 +52,15 @@ export function ReleaseNotesView({ notes, className = "" }: ReleaseNotesViewProp
       )}
 
       {hasFixes && (
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-            <Bug className="h-4 w-4 text-amber-500" />
-            Bug Fixes
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-2">
+          <h4 className="text-xs font-semibold flex items-center gap-1.5 text-amber-400">
+            <Bug className="h-3.5 w-3.5 text-amber-400" />
+            Bug Fixes & Polish
           </h4>
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {notes.fixes.map((fix, i) => (
-              <li key={i} className="text-sm text-muted-foreground pl-6 relative">
-                <span className="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-amber-500/50" />
+              <li key={i} className="text-muted-foreground/90 pl-4 relative text-[11px] leading-relaxed">
+                <span className="absolute left-1 top-1.5 h-1.5 w-1.5 rounded-full bg-amber-400/80" />
                 {fix}
               </li>
             ))}
@@ -70,3 +70,4 @@ export function ReleaseNotesView({ notes, className = "" }: ReleaseNotesViewProp
     </div>
   );
 }
+

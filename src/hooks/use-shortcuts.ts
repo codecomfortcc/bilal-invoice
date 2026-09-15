@@ -1,4 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { ALL_SHORTCUTS_REGISTRY, addRegistryShortcut, ShortcutItem } from "@/lib/shortcutRegistry";
+import { useUiStore } from "@/stores";
 
 type KeyCombo = {
   key: string;
@@ -9,6 +11,10 @@ type KeyCombo = {
 };
 
 type ShortcutOptions = {
+  id?: string;
+  title?: string;
+  description?: string;
+  category?: string;
   preventDefault?: boolean;
   allowInInputs?: boolean;
 };
@@ -18,29 +24,83 @@ export function useShortcut(
   callback: () => void,
   options: ShortcutOptions = {}
 ) {
+  const callbackRef = useRef(callback);
+  
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    if (options.id && options.title) {
+      const keys = [];
+      if (combo.ctrl) keys.push("Ctrl");
+      if (combo.shift) keys.push("Shift");
+      if (combo.alt) keys.push("Alt");
+      keys.push(combo.key.length === 1 ? combo.key.toUpperCase() : combo.key);
+
+      const shortcutItem: ShortcutItem = {
+        id: options.id,
+        title: options.title,
+        description: options.description || "",
+        category: options.category || "General",
+        keys,
+        key: combo.key,
+        ctrlKey: combo.ctrl,
+        shiftKey: combo.shift,
+        altKey: combo.alt,
+        allowInInputs: options.allowInInputs,
+        action: () => {
+           callbackRef.current();
+        }
+      };
+      
+      addRegistryShortcut(shortcutItem);
+      
+      return () => {
+         const item = ALL_SHORTCUTS_REGISTRY.find(s => s.id === options.id);
+         if (item) item.action = undefined;
+      };
+    }
+  }, [options.id]); // Run on mount or id change
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Check modifiers
-      const ctrlKey = event.ctrlKey || event.metaKey; // Treat Meta (Cmd on Mac) as Ctrl
+      if (useUiStore.getState().isRecordingShortcut) {
+        return;
+      }
+
+      let targetCtrl = combo.ctrl;
+      let targetShift = combo.shift;
+      let targetAlt = combo.alt;
+      let targetKey = combo.key;
+
+      if (options.id) {
+        const registered = ALL_SHORTCUTS_REGISTRY.find(s => s.id === options.id);
+        if (registered) {
+          targetCtrl = registered.ctrlKey;
+          targetShift = registered.shiftKey;
+          targetAlt = registered.altKey;
+          targetKey = registered.key;
+        }
+      }
+
+      const ctrlKey = event.ctrlKey || event.metaKey; 
       if (
-        (combo.ctrl ? !ctrlKey : ctrlKey) ||
-        (combo.shift ? !event.shiftKey : event.shiftKey) ||
-        (combo.alt ? !event.altKey : event.altKey)
+        (targetCtrl ? !ctrlKey : ctrlKey) ||
+        (targetShift ? !event.shiftKey : event.shiftKey) ||
+        (targetAlt ? !event.altKey : event.altKey)
       ) {
         return;
       }
 
-      // Check key (case insensitive if shift is not explicitly required)
-      if (event.key.toLowerCase() !== combo.key.toLowerCase()) {
-        // Special handling for symbols like '+' and '=' which can share the same key
-        if (combo.key === "+" && (event.key === "+" || event.key === "=")) {
-          // Allow it to pass
+      if (event.key.toLowerCase() !== targetKey.toLowerCase()) {
+        if (targetKey === "+" && (event.key === "+" || event.key === "=")) {
+          // Allow
         } else {
           return;
         }
       }
 
-      // Check if we are typing in an input
       if (!options.allowInInputs) {
         const target = event.target as HTMLElement;
         if (
@@ -56,10 +116,10 @@ export function useShortcut(
         event.preventDefault();
       }
 
-      callback();
+      callbackRef.current();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [combo, callback, options]);
+  }, [combo, options.id, options.allowInInputs, options.preventDefault]);
 }

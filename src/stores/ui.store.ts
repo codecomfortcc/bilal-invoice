@@ -3,11 +3,25 @@ import { create } from "zustand";
 interface UiState {
   isDebugMode: boolean;
   developerMode: boolean;
+  isEditing: boolean;
   zoom: number;
   lastSeenVersion: string | null;
+  showWhatsNew: boolean;
+  showGlobalSearch: boolean;
+  globalSearchInitialMode: "plain" | "items" | "history" | "settings";
+  showImportModal: boolean;
+  showExportModal: boolean;
+  isRecordingShortcut: boolean;
   toggleDebugMode: () => void;
   setDeveloperMode: (mode: boolean) => void;
+  setIsEditing: (isEditing: boolean) => void;
   setLastSeenVersion: (version: string) => void;
+  setShowWhatsNew: (show: boolean) => void;
+  setShowGlobalSearch: (show: boolean) => void;
+  openGlobalSearch: (mode?: "plain" | "items" | "history" | "settings") => void;
+  setShowImportModal: (show: boolean) => void;
+  setShowExportModal: (show: boolean) => void;
+  setIsRecordingShortcut: (recording: boolean) => void;
   setZoom: (zoom: number) => void;
   zoomIn: () => void;
   zoomOut: () => void;
@@ -19,8 +33,15 @@ interface UiState {
 export const useUiStore = create<UiState>((set) => ({
   isDebugMode: false,
   developerMode: false,
+  isEditing: true,
   zoom: 100,
   lastSeenVersion: null,
+  showWhatsNew: false,
+  showGlobalSearch: false,
+  globalSearchInitialMode: "plain",
+  showImportModal: false,
+  showExportModal: false,
+  isRecordingShortcut: false,
   systemFonts: [],
   loadSystemFonts: async () => {
     try {
@@ -58,6 +79,14 @@ export const useUiStore = create<UiState>((set) => ({
       setPreference("last_seen_version", version);
     });
   },
+  setIsEditing: (isEditing) => set({ isEditing }),
+  setShowWhatsNew: (show) => set({ showWhatsNew: show }),
+  setShowGlobalSearch: (show) => set({ showGlobalSearch: show }),
+  openGlobalSearch: (mode = "plain") =>
+    set({ globalSearchInitialMode: mode, showGlobalSearch: true }),
+  setShowImportModal: (show) => set({ showImportModal: show }),
+  setShowExportModal: (show) => set({ showExportModal: show }),
+  setIsRecordingShortcut: (isRecordingShortcut) => set({ isRecordingShortcut }),
   setZoom: (zoom) => set({ zoom }),
   zoomIn: () => set((s) => ({ zoom: Math.min(s.zoom + 10, 200) })),
   zoomOut: () => set((s) => ({ zoom: Math.max(s.zoom - 10, 30) })),

@@ -4,6 +4,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { useUiStore } from "@/stores"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -23,8 +24,12 @@ function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
 
 function DialogOverlay({
   className,
+  closeRef,
+  onClick,
   ...props
-}: DialogPrimitive.Backdrop.Props) {
+}: DialogPrimitive.Backdrop.Props & {
+  closeRef?: React.RefObject<HTMLButtonElement | null>
+}) {
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
@@ -32,6 +37,12 @@ function DialogOverlay({
         "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && closeRef?.current) {
+          closeRef.current.click();
+        }
+        onClick?.(e);
+      }}
       {...props}
     />
   )
@@ -41,21 +52,49 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onKeyDown,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
 }) {
+  const closeRef = React.useRef<HTMLButtonElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (useUiStore.getState().isRecordingShortcut) {
+          return;
+        }
+        if (closeRef.current) {
+          closeRef.current.click();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, []);
+
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay closeRef={closeRef} />
       <DialogPrimitive.Popup
+        ref={contentRef}
         data-slot="dialog-content"
         className={cn(
           "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-[8px] bg-popover p-4 text-sm text-popover-foreground shadow-lg shadow-black/10 ring-1 ring-border duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
+        onKeyDown={onKeyDown}
         {...props}
       >
+        <DialogPrimitive.Close
+          ref={closeRef}
+          data-slot="dialog-internal-close"
+          className="sr-only hidden"
+          tabIndex={-1}
+          aria-hidden="true"
+        />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
@@ -68,8 +107,7 @@ function DialogContent({
               />
             }
           >
-            <XIcon
-            />
+            <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}

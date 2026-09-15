@@ -98,7 +98,13 @@ function SidebarProvider({
   useShortcut(
     { key: SIDEBAR_KEYBOARD_SHORTCUT, ctrl: true },
     toggleSidebar,
-    { allowInInputs: false }
+    {
+      id: "shortcut-toggle-sidebar",
+      title: "Toggle Sidebar",
+      description: "Expand or collapse the main application sidebar",
+      category: "Navigation",
+      allowInInputs: false,
+    }
   )
 
   // We add a state so that we can do data-state="expanded" or "collapsed".

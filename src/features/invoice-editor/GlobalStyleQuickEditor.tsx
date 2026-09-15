@@ -45,22 +45,40 @@ export function GlobalStyleQuickEditor() {
     return () => window.removeEventListener("mousemove", updateMouse);
   }, []);
 
-  useShortcut({ key: "t", ctrl: true }, () => {
-    if (!isOpen) {
-      // Clamp position to viewport to avoid overflow
-      const width = 320; // approximate width
-      const height = 180; // approximate height
-      const x = Math.min(mousePos.x, window.innerWidth - width - 20);
-      const y = Math.min(mousePos.y, window.innerHeight - height - 20);
-      setPosition({ x, y });
+  useShortcut(
+    { key: "t", ctrl: true },
+    () => {
+      if (!isOpen) {
+        // Clamp position to viewport to avoid overflow
+        const width = 320; // approximate width
+        const height = 180; // approximate height
+        const x = Math.min(mousePos.x, window.innerWidth - width - 20);
+        const y = Math.min(mousePos.y, window.innerHeight - height - 20);
+        setPosition({ x, y });
+      }
+      setIsOpen(!isOpen);
+    },
+    {
+      id: "shortcut-toggle-quick-style",
+      title: "Toggle Quick Style Editor",
+      description: "Open or close the floating quick style editor",
+      category: "Search & Palette",
     }
-    setIsOpen(!isOpen);
-  });
+  );
 
   // Close on escape
-  useShortcut({ key: "Escape" }, () => {
-    if (isOpen) setIsOpen(false);
-  });
+  useShortcut(
+    { key: "Escape" },
+    () => {
+      setIsOpen(false);
+    },
+    {
+      id: "shortcut-close-quick-style",
+      title: "Close Quick Style Editor",
+      description: "Close the floating quick style editor when open",
+      category: "Search & Palette",
+    }
+  );
 
   const handleMasterFontChange = (font: string | null) => {
     if (!company || !font) return;

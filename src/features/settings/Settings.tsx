@@ -17,12 +17,14 @@ import { useUiStore } from "@/stores";
 import { UpdaterCard } from "./components/UpdaterCard";
 import { invoke } from "@tauri-apps/api/core";
 import { useDebugLogStore, type LogLevel } from "@/stores/debug.store";
-import { Terminal, Trash2, ExternalLink, Bug } from "lucide-react";
+import { Terminal, Trash2, ExternalLink, Bug, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function Settings() {
   const { setCompany: setGlobalCompany } = useCompanyStore();
   const { developerMode, setDeveloperMode } = useUiStore();
   const [isSaving, setIsSaving] = useState(false);
+  const navigate = useNavigate();
   const methods = useSettingsForm();
   const skipNextResetRef = (methods as any).__skipNextReset as React.MutableRefObject<boolean>;
   const logs = useDebugLogStore((s) => s.logs);
@@ -91,6 +93,10 @@ export function Settings() {
   }, [methods, doSave]);
 
   const openDevTools = async () => {
+    if (!developerMode) {
+      toast.error("Developer Mode is disabled. Enable Developer Mode first.");
+      return;
+    }
     try {
       await invoke("open_devtools");
     } catch (e) {
@@ -115,6 +121,10 @@ export function Settings() {
   return (
     <div className="h-full overflow-auto">
       <div className="max-w-3xl mx-auto py-8 px-6 space-y-6">
+        <Button variant="ghost" onClick={() => navigate("/")} className="pl-0 text-muted-foreground hover:text-foreground -ml-2 mb-2 h-8 flex items-center gap-2">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Editor
+        </Button>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
