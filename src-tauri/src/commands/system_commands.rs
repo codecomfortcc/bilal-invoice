@@ -140,3 +140,14 @@ pub fn save_pdf_export(
 ) -> Result<PdfResult> {
     pdf_service::save_pdf_export(&app_handle, pdf_bytes, &default_filename, folder_hint, file_hint)
 }
+
+#[tauri::command]
+pub fn get_initial_file() -> Result<Option<String>> {
+    let args: Vec<String> = std::env::args().collect();
+    for arg in args.into_iter().skip(1) {
+        if arg.ends_with(".binv") {
+            return Ok(Some(arg));
+        }
+    }
+    Ok(None)
+}

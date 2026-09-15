@@ -226,13 +226,28 @@ export const ALL_SHORTCUTS_REGISTRY: ShortcutItem[] = [
     ctrlKey: true,
   },
   {
+    id: "shortcut-save-project",
+    title: "Save Project (.binv)",
+    description: "Save the current invoice project to a .binv file",
+    category: "File",
+    keys: ["Ctrl", "S"],
+    key: "s",
+    ctrlKey: true,
+    allowInInputs: true,
+    action: async () => {
+      const { saveBinvProject } = await import("@/services/importExport.service");
+      await saveBinvProject();
+    },
+  },
+  {
     id: "shortcut-save-pdf",
     title: "Save & Export PDF Document",
     description: "Generate and save the invoice as a PDF file",
     category: "Invoice Actions",
-    keys: ["Ctrl", "S"],
+    keys: ["Ctrl", "Shift", "S"],
     key: "s",
     ctrlKey: true,
+    shiftKey: true,
     allowInInputs: true,
   },
   {

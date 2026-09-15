@@ -304,3 +304,92 @@ export const importProjectData = async () => {
     toast.error('Failed to import project. Invalid file format.');
   }
 };
+
+/**
+ * Save project to .binv file
+ */
+export const saveBinvProject = async () => {
+  try {
+    const fullInvoice = useInvoiceStore.getState().invoiceData;
+    const fullCompany = useCompanyStore.getState().company;
+
+    const exportPayload = {
+      version: "1.0",
+      timestamp: new Date().toISOString(),
+      invoiceData: fullInvoice,
+      company: fullCompany,
+    };
+
+    const jsonStr = JSON.stringify(exportPayload, null, 2);
+
+    const filePath = await save({
+      filters: [{
+        name: 'Bilal Invoice File',
+        extensions: ['binv']
+      }],
+      defaultPath: `invoice_${fullInvoice.invoiceNumber || Date.now()}.binv`
+    });
+
+    if (filePath) {
+      const { writeTextFile } = await import('@tauri-apps/plugin-fs');
+      await writeTextFile(filePath, jsonStr);
+      toast.success('Project saved successfully');
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Failed to save project:', error);
+    toast.error('Failed to save project');
+    return false;
+  }
+};
+
+/**
+ * Direct open for .binv
+ */
+export const openBinvProject = async (filePath?: string) => {
+  try {
+    let selected = filePath;
+    if (!selected) {
+      selected = await open({
+        multiple: false,
+        filters: [{
+          name: 'Bilal Invoice File',
+          extensions: ['binv']
+        }]
+      }) as string;
+    }
+
+    if (selected && typeof selected === 'string') {
+      const { readTextFile } = await import('@tauri-apps/plugin-fs');
+      const jsonStr = await readTextFile(selected);
+      const importedData = JSON.parse(jsonStr);
+      
+      const importedInvoice = importedData.invoiceData || importedData;
+      const importedCompany = importedData.company || null;
+      
+      useInvoiceStore.getState().setInvoiceData(importedInvoice as any);
+      
+      if (importedCompany) {
+        useCompanyStore.getState().setCompany(importedCompany);
+        const { saveCompanySettings } = await import('@/services/settings.service');
+        await saveCompanySettings(importedCompany);
+      }
+
+      // Track in history
+      const fileName = selected.split(/[/\\]/).pop() || 'imported_file.binv';
+      await saveImportHistoryRecord({
+        fileName,
+        invoiceNumber: (importedInvoice as any).invoiceNumber || 'INV-DRAFT',
+        clientName: (importedInvoice as any).client?.name || (importedInvoice as any).billTo?.name || 'Client',
+        totalAmount: (importedInvoice as any).total || 0,
+        data: importedData,
+      });
+
+      toast.success('Project opened successfully');
+    }
+  } catch (error) {
+    console.error('Failed to open project:', error);
+    toast.error('Failed to open project. Invalid file format.');
+  }
+};

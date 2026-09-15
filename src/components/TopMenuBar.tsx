@@ -109,6 +109,16 @@ export function TopMenuBar() {
             </DropdownMenuSubContent>
           </DropdownMenuSub>
           <DropdownMenuSeparator className="bg-sidebar-border" />
+          <DropdownMenuItem className="hover:bg-accent focus:bg-accent cursor-pointer flex justify-between items-center" onClick={async () => {
+            const { saveBinvProject } = await import("@/services/importExport.service");
+            await saveBinvProject();
+          }}>
+            <span>Save Project...</span>
+            <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+              Ctrl+S
+            </kbd>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-sidebar-border" />
           <DropdownMenuItem className="hover:bg-accent focus:bg-accent cursor-pointer flex justify-between items-center" onClick={() => setShowImportModal(true)}>
             <span>Import Modal & History...</span>
             <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">

@@ -139,6 +139,17 @@ function App() {
         } catch (e) {
           console.error("Failed to create new invoice:", e);
         }
+
+        try {
+          const { invoke } = await import("@tauri-apps/api/core");
+          const initialFile = await invoke<string | null>("get_initial_file");
+          if (initialFile) {
+            const { openBinvProject } = await import("@/services/importExport.service");
+            await openBinvProject(initialFile);
+          }
+        } catch (e) {
+          console.error("Failed to check initial file:", e);
+        }
         
         setDbReady(true);
       })
