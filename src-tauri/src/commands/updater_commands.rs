@@ -97,7 +97,13 @@ pub async fn install_update(app: AppHandle) -> Result<(), String> {
             // Clean up the temp file after successful install initiation
             let _ = fs::remove_file(path);
             
+            #[cfg(target_os = "windows")]
+            app.exit(0);
+
+            #[cfg(not(target_os = "windows"))]
             app.restart();
+            
+            #[allow(unreachable_code)]
             Ok(())
         }
         Ok(None) => Err("No update metadata available to install.".to_string()),

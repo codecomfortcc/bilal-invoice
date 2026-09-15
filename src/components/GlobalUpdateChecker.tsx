@@ -221,8 +221,8 @@ export function GlobalUpdateChecker() {
             <p className="text-xs text-muted-foreground">
               Version {updateInfo?.version} is ready. Restart to apply the update seamlessly.
             </p>
-            <Button onClick={installUpdate} size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white">
-              Restart to Update
+            <Button onClick={installUpdate} size="sm" className="w-full bg-sky-500 hover:bg-sky-600 text-white">
+              Restart Now
             </Button>
           </div>
         )}
