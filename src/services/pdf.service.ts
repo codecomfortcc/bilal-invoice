@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import * as htmlToImage from "html-to-image";
 import { InvoiceData } from "@/types";
 import { invoke } from "@tauri-apps/api/core";
+import { includePdfNode } from "@/lib/pdfDisplay";
 
 export interface PdfResult {
   success: boolean;
@@ -43,6 +44,7 @@ export async function generatePdf(invoiceData: InvoiceData): Promise<PdfResult> 
         quality: 0.95,
         backgroundColor: "#ffffff",
         pixelRatio: 2,
+        filter: includePdfNode,
       });
 
       // Restore transform

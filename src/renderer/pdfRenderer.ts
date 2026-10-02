@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import * as htmlToImage from 'html-to-image';
 import { InvoiceData } from '@/types';
+import { includePdfNode } from '@/lib/pdfDisplay';
 
 export async function generatePdf(invoiceData: InvoiceData) {
   // Find the live preview container
@@ -19,7 +20,8 @@ export async function generatePdf(invoiceData: InvoiceData) {
     const imgData = await htmlToImage.toJpeg(element, {
       quality: 0.95,
       backgroundColor: '#ffffff',
-      pixelRatio: 2 // Higher scale for better resolution in PDF
+      pixelRatio: 2, // Higher scale for better resolution in PDF
+      filter: includePdfNode
     });
 
     // Restore the scale transform

@@ -9,6 +9,7 @@ import { ContentEditable } from "@/components/ui/content-editable";
 import { Switch } from "@/components/ui/switch";
 import { saveCompanySettings } from "@/services/settings.service";
 import { cn } from "@/lib/utils";
+import { isEmptyDisplayValue, isUnresolvedTemplatePlaceholder } from "@/lib/pdfDisplay";
 
 export const EditableDate = ({
   value,
@@ -56,8 +57,13 @@ export const EditableDate = ({
 
   const getFormattedDisplay = () => {
     const isAutoDate = showAutoDateToggle && autoDateConfigKey && company?.[autoDateConfigKey] !== false;
+    if (!isAutoDate && (isEmptyDisplayValue(value) || isUnresolvedTemplatePlaceholder(value))) {
+      return isEditing && placeholder
+        ? <span data-pdf-placeholder="" className="opacity-40 italic font-normal">{placeholder}</span>
+        : <span>&nbsp;</span>;
+    }
     if (!isAutoDate && (!date || !isValid(date))) {
-      return value || (isEditing && placeholder ? <span className="opacity-40 italic font-normal">{placeholder}</span> : <span>&nbsp;</span>);
+      return value;
     }
     
     const dateToFormat = isAutoDate ? new Date() : (date as Date);

@@ -11,6 +11,7 @@ import { useCompanyStore, useHistoryStore, useUiStore } from "@/stores";
 import { saveCompanySettings } from "@/services/settings.service";
 import { formatFontVariant, parseFontVariant } from "@/lib/utils";
 import { CompanyContext } from "@/features/invoice-editor/InvoicePreview";
+import { isEmptyDisplayValue, isUnresolvedTemplatePlaceholder } from "@/lib/pdfDisplay";
 
 const FALLBACK_FONTS = [
   "Arial", "Helvetica", "Times New Roman", "Courier New", "Georgia", "Verdana", "Tahoma", "Trebuchet MS", "Impact", "Segoe UI"
@@ -187,7 +188,7 @@ export function ContentEditable({
     if (renderDisplay) {
       return <>{renderDisplay(styleObj)}</>;
     }
-    if (!value && value !== 0) {
+    if (isEmptyDisplayValue(value) || isUnresolvedTemplatePlaceholder(value)) {
       return <span className={cn("inline-block min-h-[1em]", className)}>&nbsp;</span>;
     }
     return (
@@ -253,8 +254,19 @@ export function ContentEditable({
                 )}
               </div>
             )}
-            <span ref={spanRef} style={styleObj} className="break-words break-all whitespace-normal block w-full">
-               {value || (isEditing && placeholder ? <span className="opacity-40 italic font-normal">{placeholder}</span> : <span>&nbsp;</span>)}
+            <span
+              ref={spanRef}
+              style={styleObj}
+              className="break-words break-all whitespace-normal block w-full"
+              data-pdf-placeholder={
+                (isEditing && isEmptyDisplayValue(value) && !!placeholder) || isUnresolvedTemplatePlaceholder(value)
+                  ? ""
+                  : undefined
+              }
+            >
+               {isEmptyDisplayValue(value)
+                 ? (isEditing && placeholder ? <span className="opacity-40 italic font-normal">{placeholder}</span> : <span>&nbsp;</span>)
+                 : value}
             </span>
           </button>
         )}>

@@ -5,6 +5,7 @@ import { Upload, Crop as CropIcon, Image as ImageIcon } from "lucide-react";
 import Cropper from "react-easy-crop";
 import { motion, AnimatePresence } from "framer-motion";
 import { ContentEditable } from "@/components/ui/content-editable";
+import { isEmptyDisplayValue } from "@/lib/pdfDisplay";
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
@@ -95,13 +96,14 @@ export const EditableImage = ({
       className={cn(
         "cursor-pointer hover:ring-1 hover:ring-black/10 rounded-md transition-all border border-dashed border-transparent hover:border-black/20 overflow-hidden relative group/image",
         "flex items-center justify-center min-h-[40px] min-w-[80px]",
-        !value && "bg-black/5 text-black/40 border-black/10 hover:bg-black/10",
-        !isEditing && !value && "hidden",
+        isEmptyDisplayValue(value) && "bg-black/5 text-black/40 border-black/10 hover:bg-black/10",
+        !isEditing && isEmptyDisplayValue(value) && "hidden",
         className
       )}
       style={style}
+      data-pdf-placeholder={isEmptyDisplayValue(value) ? "" : undefined}
     >
-      {value ? (
+      {!isEmptyDisplayValue(value) ? (
         <img src={value} alt="Signature" className="max-w-full max-h-full object-contain pointer-events-none" />
       ) : isEditing ? (
         <div className="flex flex-col items-center justify-center p-2">

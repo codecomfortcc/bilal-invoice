@@ -30,11 +30,11 @@ export const EditableCash = ({
   multiline?: boolean;
   onDone?: (val: string) => void;
 }) => {
-  const [localValue, setLocalValue] = useState(String(value || ""));
+  const [localValue, setLocalValue] = useState(String(value ?? ""));
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setLocalValue(String(value || ""));
+    setLocalValue(String(value ?? ""));
   }, [value]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,7 +49,7 @@ export const EditableCash = ({
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      if (newVal !== String(value || "")) {
+      if (newVal !== String(value ?? "")) {
         onChange(newVal);
       }
     }, 400);
@@ -66,7 +66,7 @@ export const EditableCash = ({
       }
     }
     
-    if (finalValue !== String(value || "")) {
+    if (finalValue !== String(value ?? "")) {
       useHistoryStore.getState().commit();
       onChange(finalValue);
     }

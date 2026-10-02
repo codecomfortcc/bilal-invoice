@@ -31,11 +31,11 @@ export const EditableQuantity = ({
   multiline?: boolean;
   onDone?: (val: string) => void;
 }) => {
-  const [localValue, setLocalValue] = useState(String(value || ""));
+  const [localValue, setLocalValue] = useState(String(value ?? ""));
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setLocalValue(String(value || ""));
+    setLocalValue(String(value ?? ""));
   }, [value]);
 
   const handleIncrement = () => {
@@ -63,7 +63,7 @@ export const EditableQuantity = ({
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      if (newVal !== String(value || "")) {
+      if (newVal !== String(value ?? "")) {
         onChange(newVal);
       }
     }, 300);
@@ -74,7 +74,7 @@ export const EditableQuantity = ({
       clearTimeout(debounceRef.current);
       debounceRef.current = null;
     }
-    if (localValue !== String(value || "")) {
+    if (localValue !== String(value ?? "")) {
       useHistoryStore.getState().commit();
       onChange(localValue);
     }

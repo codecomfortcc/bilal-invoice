@@ -870,7 +870,7 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany, onUpd
                           <div style={{ width: widths.qty }} className="p-1 pt-1.5 text-center font-bold break-words break-all shrink-0">
                             <EditableQuantity
                               isEditing={isEditing}
-                              value={item.quantity || ""}
+                              value={item.quantity ?? ""}
                               onChange={(v) => updateItem(globalIndex, "quantity", v)}
                               className="text-center font-bold"
                             />
@@ -878,7 +878,7 @@ export function InvoicePreview({ data, isEditing = false, overrideCompany, onUpd
                           <div style={{ width: widths.rate }} className="p-1 pr-2 pt-1.5 text-right break-words break-all shrink-0">
                             <EditableCash
                               isEditing={isEditing}
-                              value={item.rate || ""}
+                              value={item.rate ?? ""}
                               onChange={(v) => updateItem(globalIndex, "rate", v)}
                               className="text-right"
                             />

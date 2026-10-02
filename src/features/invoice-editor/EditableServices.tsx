@@ -31,7 +31,7 @@ export const EditableServices = ({
   lockableKey,
   onDone,
 }: EditableServicesProps) => {
-  const [localValue, setLocalValue] = useState(String(value || ""));
+  const [localValue, setLocalValue] = useState(String(value ?? ""));
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,7 +46,7 @@ export const EditableServices = ({
 
   useEffect(() => {
     if (String(value) !== localValue) {
-      setLocalValue(String(value || ""));
+      setLocalValue(String(value ?? ""));
     }
   }, [value]);
 
